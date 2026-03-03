@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronRight, Users, Building } from 'lucide-react';
+import { ArrowRight, ChevronRight, ChevronLeft, Users, Building } from 'lucide-react';
 import { useLang } from '../LangContext.jsx';
-import { EditableText } from '../components/Editable.jsx';
+import { EditableText, EditableImage } from '../components/Editable.jsx';
 import { EditableIcon, getIcon } from '../components/IconPicker.jsx';
+import { useAdmin } from '../AdminContext.jsx';
 import './HomePage.css';
 
 const defaultServiceIcons = { internet: 'wifi', hosting: 'harddrive', vps: 'server', security: 'shield' };
@@ -15,6 +16,143 @@ const serviceLinks = {
   vps: '/business?tab=vps#plans',
   security: '/business?tab=security#plans'
 };
+
+const defaultSpecialServices = [
+  { id: 1, image: '', titleKey: 'special.1.title', descKey: 'special.1.desc' },
+  { id: 2, image: '', titleKey: 'special.2.title', descKey: 'special.2.desc' },
+  { id: 3, image: '', titleKey: 'special.3.title', descKey: 'special.3.desc' },
+  { id: 4, image: '', titleKey: 'special.4.title', descKey: 'special.4.desc' },
+  { id: 5, image: '', titleKey: 'special.5.title', descKey: 'special.5.desc' },
+  { id: 6, image: '', titleKey: 'special.6.title', descKey: 'special.6.desc' },
+];
+
+function SpecialServicesSlider() {
+  const { t, setTranslation } = useLang();
+  const { isAdmin, editMode } = useAdmin();
+  const s = (key) => (val) => setTranslation(key, val);
+  const trackRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [images, setImages] = useState({});
+
+  // Load saved images from server
+  useEffect(() => {
+    fetch('/api/translations/icons')
+      .then(r => r.json())
+      .then(data => {
+        const imgs = {};
+        defaultSpecialServices.forEach(svc => {
+          const key = `specialImg${svc.id}`;
+          if (data[key]) imgs[svc.id] = data[key];
+        });
+        setImages(imgs);
+      })
+      .catch(() => {});
+  }, []);
+
+  const updateScrollButtons = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 5);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 5);
+  }, []);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateScrollButtons, { passive: true });
+    updateScrollButtons();
+    window.addEventListener('resize', updateScrollButtons);
+    return () => {
+      el.removeEventListener('scroll', updateScrollButtons);
+      window.removeEventListener('resize', updateScrollButtons);
+    };
+  }, [updateScrollButtons]);
+
+  const scroll = (dir) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const cardWidth = el.querySelector('.special__card')?.offsetWidth || 340;
+    el.scrollBy({ left: dir * (cardWidth + 20), behavior: 'smooth' });
+  };
+
+  const saveImage = (id, url) => {
+    setImages(prev => ({ ...prev, [id]: url }));
+    fetch('/api/translations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: 'icons', key: `specialImg${id}`, value: url })
+    }).catch(() => {});
+  };
+
+  const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" fill="none">
+      <rect width="400" height="240" rx="12" fill="#1c1c28"/>
+      <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#55556a" font-family="Arial" font-size="14">Нет фото</text>
+    </svg>`
+  );
+
+  return (
+    <section className="section special-services">
+      <div className="container">
+        <EditableText value={t('special.label') || 'СПЕЦПРЕДЛОЖЕНИЯ'} tag="div" className="section-label" onSave={s('special.label')} />
+        <div className="special__header">
+          <div>
+            <EditableText value={t('special.title') || 'Особые услуги'} tag="h2" className="section-title" onSave={s('special.title')} />
+            <EditableText value={t('special.subtitle') || 'Уникальные решения для вашего бизнеса и дома'} tag="p" className="section-subtitle" onSave={s('special.subtitle')} />
+          </div>
+          <div className="special__nav">
+            <button
+              className={`special__nav-btn${!canScrollLeft ? ' special__nav-btn--disabled' : ''}`}
+              onClick={() => scroll(-1)}
+              disabled={!canScrollLeft}
+              aria-label="Назад"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              className={`special__nav-btn${!canScrollRight ? ' special__nav-btn--disabled' : ''}`}
+              onClick={() => scroll(1)}
+              disabled={!canScrollRight}
+              aria-label="Вперёд"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+        <div className="special__track" ref={trackRef}>
+          {defaultSpecialServices.map((svc, i) => (
+            <div key={svc.id} className="special__card" style={{ animationDelay: `${i * 0.08}s` }}>
+              <div className="special__img-wrap">
+                <EditableImage
+                  src={images[svc.id] || placeholderImg}
+                  className="special__img"
+                  alt={t(svc.titleKey) || `Услуга ${svc.id}`}
+                  name={`special-${svc.id}`}
+                  onSave={(url) => saveImage(svc.id, url)}
+                />
+              </div>
+              <div className="special__card-body">
+                <EditableText
+                  value={t(svc.titleKey) || `Услуга ${svc.id}`}
+                  tag="h3"
+                  className="special__card-title"
+                  onSave={s(svc.titleKey)}
+                />
+                <EditableText
+                  value={t(svc.descKey) || 'Описание услуги'}
+                  tag="p"
+                  className="special__card-desc"
+                  onSave={s(svc.descKey)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function HomePage() {
   const { t, setTranslation } = useLang();
@@ -96,6 +234,9 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* === SPECIAL SERVICES SLIDER === */}
+      <SpecialServicesSlider />
 
       <section className="section services-preview">
         <div className="container">

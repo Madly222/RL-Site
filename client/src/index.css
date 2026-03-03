@@ -30,8 +30,8 @@
   --font-display: 'Arial', 'Helvetica Neue', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Spacing */
-  --section-padding: 100px 0;
+  /* Spacing — reduced from 100px to 64px */
+  --section-padding: 64px 0;
   --container-width: 1200px;
   --radius: 12px;
   --radius-lg: 20px;
@@ -136,7 +136,7 @@ button {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
   line-height: 1.15;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   letter-spacing: -0.02em;
 }
 
@@ -262,7 +262,7 @@ button {
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   :root {
-    --section-padding: 60px 0;
+    --section-padding: 40px 0;
   }
 
   .section-title {

@@ -116,5 +116,13 @@
     "Функция 3"
   ],
   "serviceData.service-1772445424322.contentBlocks": [],
-  "serviceData.internet.contentBlocks": []
+  "serviceData.internet.contentBlocks": [],
+  "special.1.title": "special.1.title ru",
+  "categories.service-1772528231663": "Новая услуга",
+  "serviceData.service-1772528231663.title": "Новая услуга",
+  "serviceData.service-1772528231663.description": "Описание новой услуги",
+  "serviceData.service-1772528231663.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ]
 }
