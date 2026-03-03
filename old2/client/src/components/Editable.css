@@ -1,0 +1,77 @@
+.editable {
+  position: relative;
+  cursor: pointer;
+  transition: outline 0.2s;
+  border-radius: 4px;
+}
+
+.editable:hover {
+  outline: 2px dashed var(--accent);
+  outline-offset: 4px;
+}
+
+.editable:hover .editable__icon {
+  opacity: 1;
+}
+
+.editable--editing {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 4px;
+  cursor: text;
+  min-width: 20px;
+}
+
+.editable--editing .editable__icon {
+  display: none;
+}
+
+.editable__icon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.editable-img {
+  position: relative;
+}
+
+.editable-img:hover .editable-img__btn {
+  opacity: 1;
+}
+
+.editable-img__btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.editable-img__btn:hover {
+  background: var(--accent);
+}

@@ -1,0 +1,26 @@
+{
+  "personal": [
+    {
+      "id": "internet",
+      "icon": "wifi"
+    }
+  ],
+  "business": [
+    {
+      "id": "internet",
+      "icon": "wifi"
+    },
+    {
+      "id": "hosting",
+      "icon": "harddrive"
+    },
+    {
+      "id": "vps",
+      "icon": "server"
+    },
+    {
+      "id": "security",
+      "icon": "shield"
+    }
+  ]
+}

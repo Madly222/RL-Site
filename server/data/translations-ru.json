@@ -1,0 +1,120 @@
+{
+  "serviceData.internet.features": [
+    "Безлимитный трафик",
+    "Роутер в комплекте",
+    "Стабильное соединение",
+    " Скорость до 1 Гбит/с"
+  ],
+  "categories.service-1772444328738": "Новая услуга",
+  "serviceData.service-1772444328738.title": "Новая услуга",
+  "serviceData.service-1772444328738.description": "Описание новой услуги",
+  "serviceData.service-1772444328738.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "categories.service-1772444334585": "Новая услуга 2",
+  "serviceData.service-1772444334585.title": "Новая услуга",
+  "serviceData.service-1772444334585.description": "Описание новой услуги",
+  "serviceData.service-1772444334585.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "categories.service-1772444443113": "Новая услуга",
+  "serviceData.service-1772444443113.title": "Новая услуга",
+  "serviceData.service-1772444443113.description": "Описание новой услуги",
+  "serviceData.service-1772444443113.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "categories.service-1772444673513": "Новая услуга",
+  "serviceData.service-1772444673513.title": "Новая услуга",
+  "serviceData.service-1772444673513.description": "Описание новой услуги",
+  "serviceData.service-1772444673513.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "categories.service-1772444675073": "Новая услуга",
+  "serviceData.service-1772444675073.title": "Новая услуга",
+  "serviceData.service-1772444675073.description": "Описание новой услуги",
+  "serviceData.service-1772444675073.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "categories.service-1772444676321": "Новая услуга",
+  "serviceData.service-1772444676321.title": "Новая услуга",
+  "serviceData.service-1772444676321.description": "Описание новой услуги",
+  "serviceData.service-1772444676321.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "categories.service-1772444680593": "Новая услуга",
+  "serviceData.service-1772444680593.title": "Новая услуга",
+  "serviceData.service-1772444680593.description": "Описание новой услуги",
+  "serviceData.service-1772444680593.features": [
+    "Пункт 1",
+    "Пункт 2",
+    "Новый пункт"
+  ],
+  "serviceData.service-1772444680593.contentBlocks": [],
+  "categories.service-1772444774037": "Новая услуга",
+  "serviceData.service-1772444774037.title": "Новая услуга",
+  "serviceData.service-1772444774037.description": "Описание новой услуги",
+  "serviceData.service-1772444774037.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "planFeatures.internet.red mill": [
+    "Роутер в комплекте",
+    "Статический IP",
+    "Контракт 24 месяца"
+  ],
+  "planFeatures.internet.red wings": [
+    "300 Мбит/с",
+    "Роутер в комплекте",
+    "Статический IP",
+    "Контракт 24 месяца"
+  ],
+  "categories.service-1772445409795": "Новая услуга",
+  "serviceData.service-1772445409795.title": "Новая услуга",
+  "serviceData.service-1772445409795.description": "Описание новой услуги",
+  "serviceData.service-1772445409795.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "serviceData.service-1772445410443.title": "Новая услуга",
+  "categories.service-1772445410443": "Новая услуга",
+  "serviceData.service-1772445410443.description": "Описание новой услуги",
+  "serviceData.service-1772445410443.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "categories.service-1772445411092": "Новая услуга",
+  "serviceData.service-1772445411092.title": "Новая услуга",
+  "serviceData.service-1772445411092.description": "Описание новой услуги",
+  "serviceData.service-1772445411092.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "categories.service-1772445411906": "Новая услуга",
+  "serviceData.service-1772445411906.title": "Новая услуга",
+  "serviceData.service-1772445411906.description": "Описание новой услуги",
+  "serviceData.service-1772445411906.features": [
+    "Пункт 1",
+    "Пункт 2"
+  ],
+  "categories.service-1772445424322": "Новая услуга",
+  "serviceData.service-1772445424322.title": "Новая услуга",
+  "serviceData.service-1772445424322.description": "Описание новой услуги",
+  "serviceData.service-1772445424322.features": [
+    "Пункт 1",
+    "Пункт 2",
+    "Новый пункт"
+  ],
+  "planFeatures.service-1772445424322.новый план": [
+    "Функция 1",
+    "Функция 2",
+    "Функция 3"
+  ],
+  "serviceData.service-1772445424322.contentBlocks": [],
+  "serviceData.internet.contentBlocks": []
+}

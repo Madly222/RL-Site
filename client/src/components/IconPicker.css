@@ -1,0 +1,80 @@
+.icon-picker__current {
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+}
+
+.icon-picker__current:hover .icon-picker__edit {
+  opacity: 1;
+}
+
+.icon-picker__edit {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.icon-picker__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+.icon-picker__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  max-height: 240px;
+  overflow-y: auto;
+  width: 220px;
+}
+
+.icon-picker__option {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.icon-picker__option:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.icon-picker__option--active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
