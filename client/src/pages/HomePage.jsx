@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronRight, ChevronLeft, Users, Building } from 'lucide-react';
+import { ArrowRight, ChevronRight, ChevronLeft, Users, Building, Plus, Trash2, Settings, X } from 'lucide-react';
 import { useLang } from '../LangContext.jsx';
 import { EditableText, EditableImage } from '../components/Editable.jsx';
 import { EditableIcon, getIcon } from '../components/IconPicker.jsx';
@@ -17,140 +17,216 @@ const serviceLinks = {
   security: '/business?tab=security#plans'
 };
 
-const defaultSpecialServices = [
-  { id: 1, image: '', titleKey: 'special.1.title', descKey: 'special.1.desc' },
-  { id: 2, image: '', titleKey: 'special.2.title', descKey: 'special.2.desc' },
-  { id: 3, image: '', titleKey: 'special.3.title', descKey: 'special.3.desc' },
-  { id: 4, image: '', titleKey: 'special.4.title', descKey: 'special.4.desc' },
-  { id: 5, image: '', titleKey: 'special.5.title', descKey: 'special.5.desc' },
-  { id: 6, image: '', titleKey: 'special.6.title', descKey: 'special.6.desc' },
-];
+const PLACEHOLDER_IMG = 'data:image/svg+xml,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" fill="none">
+    <rect width="320" height="360" fill="#1c1c28"/>
+    <rect x="130" y="140" width="60" height="60" rx="8" fill="#2a2a3a"/>
+    <path d="M148 178l8-10 6 7 4-3 10 12h-34z" fill="#55556a"/>
+    <circle cx="156" cy="160" r="5" fill="#55556a"/>
+    <text x="50%" y="230" text-anchor="middle" fill="#55556a" font-family="Arial" font-size="12">Загрузить фото</text>
+  </svg>`
+);
 
-function SpecialServicesSlider() {
+function HeroSlider() {
   const { t, setTranslation } = useLang();
   const { isAdmin, editMode } = useAdmin();
   const s = (key) => (val) => setTranslation(key, val);
-  const trackRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [images, setImages] = useState({});
 
-  // Load saved images from server
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [cards, setCards] = useState([]);
+  const [images, setImages] = useState({});
+  const [speed, setSpeed] = useState(4000);
+  const [showSettings, setShowSettings] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef(null);
+
   useEffect(() => {
     fetch('/api/translations/icons')
       .then(r => r.json())
       .then(data => {
+        if (data.sliderSpeed) setSpeed(Number(data.sliderSpeed) || 4000);
+        let cardList = [];
+        if (data.sliderCards) {
+          try { cardList = JSON.parse(data.sliderCards); } catch { cardList = []; }
+        }
+        if (!cardList.length) {
+          cardList = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }, { id: 6 }];
+        }
+        setCards(cardList);
         const imgs = {};
-        defaultSpecialServices.forEach(svc => {
-          const key = `specialImg${svc.id}`;
-          if (data[key]) imgs[svc.id] = data[key];
+        cardList.forEach(c => {
+          if (data[`specialImg${c.id}`]) imgs[c.id] = data[`specialImg${c.id}`];
         });
         setImages(imgs);
       })
-      .catch(() => {});
+      .catch(() => {
+        setCards([{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }, { id: 6 }]);
+      });
   }, []);
 
-  const updateScrollButtons = useCallback(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 5);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 5);
-  }, []);
-
-  useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    el.addEventListener('scroll', updateScrollButtons, { passive: true });
-    updateScrollButtons();
-    window.addEventListener('resize', updateScrollButtons);
-    return () => {
-      el.removeEventListener('scroll', updateScrollButtons);
-      window.removeEventListener('resize', updateScrollButtons);
-    };
-  }, [updateScrollButtons]);
-
-  const scroll = (dir) => {
-    const el = trackRef.current;
-    if (!el) return;
-    const cardWidth = el.querySelector('.special__card')?.offsetWidth || 340;
-    el.scrollBy({ left: dir * (cardWidth + 20), behavior: 'smooth' });
-  };
-
-  const saveImage = (id, url) => {
-    setImages(prev => ({ ...prev, [id]: url }));
+  const saveToServer = (key, value) => {
     fetch('/api/translations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lang: 'icons', key: `specialImg${id}`, value: url })
+      body: JSON.stringify({ lang: 'icons', key, value })
     }).catch(() => {});
   };
 
-  const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" fill="none">
-      <rect width="400" height="240" rx="12" fill="#1c1c28"/>
-      <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#55556a" font-family="Arial" font-size="14">Нет фото</text>
-    </svg>`
-  );
+  // Autoplay — single image fade transition
+  useEffect(() => {
+    if (isPaused || cards.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      setActiveIdx(prev => (prev + 1) % cards.length);
+    }, speed);
+    return () => clearInterval(timerRef.current);
+  }, [speed, isPaused, cards.length]);
+
+  const goTo = (idx) => {
+    setActiveIdx(idx);
+    // Reset timer on manual navigation
+    clearInterval(timerRef.current);
+    if (!isPaused && cards.length > 1) {
+      timerRef.current = setInterval(() => {
+        setActiveIdx(prev => (prev + 1) % cards.length);
+      }, speed);
+    }
+  };
+
+  const prev = () => goTo((activeIdx - 1 + cards.length) % cards.length);
+  const next = () => goTo((activeIdx + 1) % cards.length);
+
+  const saveImage = (id, url) => {
+    setImages(prev => ({ ...prev, [id]: url }));
+    saveToServer(`specialImg${id}`, url);
+  };
+
+  const addCard = () => {
+    const maxId = cards.reduce((max, c) => Math.max(max, c.id), 0);
+    const updated = [...cards, { id: maxId + 1 }];
+    setCards(updated);
+    saveToServer('sliderCards', JSON.stringify(updated));
+    setActiveIdx(updated.length - 1);
+  };
+
+  const deleteCard = (id) => {
+    if (cards.length <= 1) return;
+    const idx = cards.findIndex(c => c.id === id);
+    const updated = cards.filter(c => c.id !== id);
+    setCards(updated);
+    saveToServer('sliderCards', JSON.stringify(updated));
+    setImages(prev => { const n = { ...prev }; delete n[id]; return n; });
+    if (activeIdx >= updated.length) setActiveIdx(updated.length - 1);
+    else if (idx < activeIdx) setActiveIdx(activeIdx - 1);
+  };
+
+  const handleSpeedChange = (val) => {
+    const ms = Math.max(1000, Math.min(15000, Number(val)));
+    setSpeed(ms);
+    saveToServer('sliderSpeed', String(ms));
+  };
+
+  const activeCard = cards[activeIdx];
 
   return (
-    <section className="section special-services">
-      <div className="container">
-        <EditableText value={t('special.label') || 'СПЕЦПРЕДЛОЖЕНИЯ'} tag="div" className="section-label" onSave={s('special.label')} />
-        <div className="special__header">
-          <div>
-            <EditableText value={t('special.title') || 'Особые услуги'} tag="h2" className="section-title" onSave={s('special.title')} />
-            <EditableText value={t('special.subtitle') || 'Уникальные решения для вашего бизнеса и дома'} tag="p" className="section-subtitle" onSave={s('special.subtitle')} />
+    <div
+      className="hero-window"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Gradient border like server rack had */}
+      <div className="hero-window__border" />
+
+      {/* Admin gear */}
+      {isAdmin && editMode && (
+        <button className="hero-window__gear" onClick={() => setShowSettings(!showSettings)}>
+          {showSettings ? <X size={14} /> : <Settings size={14} />}
+        </button>
+      )}
+
+      {/* Admin settings */}
+      {isAdmin && editMode && showSettings && (
+        <div className="hero-window__settings">
+          <div className="hero-window__settings-row">
+            <label>Скорость:</label>
+            <input
+              type="range" min="1" max="15" step="0.5"
+              value={speed / 1000}
+              onChange={(e) => handleSpeedChange(e.target.value * 1000)}
+            />
+            <span className="hero-window__speed-val">{(speed / 1000).toFixed(1)}с</span>
           </div>
-          <div className="special__nav">
-            <button
-              className={`special__nav-btn${!canScrollLeft ? ' special__nav-btn--disabled' : ''}`}
-              onClick={() => scroll(-1)}
-              disabled={!canScrollLeft}
-              aria-label="Назад"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              className={`special__nav-btn${!canScrollRight ? ' special__nav-btn--disabled' : ''}`}
-              onClick={() => scroll(1)}
-              disabled={!canScrollRight}
-              aria-label="Вперёд"
-            >
-              <ChevronRight size={20} />
+          <div className="hero-window__settings-row">
+            <label>Слайдов: {cards.length}</label>
+            <button className="hero-window__add-btn" onClick={addCard}>
+              <Plus size={14} /> Добавить
             </button>
           </div>
         </div>
-        <div className="special__track" ref={trackRef}>
-          {defaultSpecialServices.map((svc, i) => (
-            <div key={svc.id} className="special__card" style={{ animationDelay: `${i * 0.08}s` }}>
-              <div className="special__img-wrap">
-                <EditableImage
-                  src={images[svc.id] || placeholderImg}
-                  className="special__img"
-                  alt={t(svc.titleKey) || `Услуга ${svc.id}`}
-                  name={`special-${svc.id}`}
-                  onSave={(url) => saveImage(svc.id, url)}
-                />
-              </div>
-              <div className="special__card-body">
-                <EditableText
-                  value={t(svc.titleKey) || `Услуга ${svc.id}`}
-                  tag="h3"
-                  className="special__card-title"
-                  onSave={s(svc.titleKey)}
-                />
-                <EditableText
-                  value={t(svc.descKey) || 'Описание услуги'}
-                  tag="p"
-                  className="special__card-desc"
-                  onSave={s(svc.descKey)}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+      )}
+
+      {/* Image area */}
+      <div className="hero-window__image-area">
+        {activeCard && (
+          <>
+            {isAdmin && editMode && (
+              <button
+                className="hero-window__delete"
+                onClick={() => deleteCard(activeCard.id)}
+                title="Удалить слайд"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+            <EditableImage
+              src={images[activeCard.id] || PLACEHOLDER_IMG}
+              className="hero-window__img"
+              alt={t(`special.${activeCard.id}.title`) || `Услуга ${activeCard.id}`}
+              name={`special-${activeCard.id}`}
+              onSave={(url) => saveImage(activeCard.id, url)}
+            />
+          </>
+        )}
       </div>
-    </section>
+
+      {/* Caption */}
+      {activeCard && (
+        <div className="hero-window__caption">
+          <EditableText
+            value={t(`special.${activeCard.id}.title`) || `Услуга ${activeCard.id}`}
+            tag="div"
+            className="hero-window__caption-title"
+            onSave={s(`special.${activeCard.id}.title`)}
+          />
+          <EditableText
+            value={t(`special.${activeCard.id}.desc`) || 'Описание услуги'}
+            tag="div"
+            className="hero-window__caption-desc"
+            onSave={s(`special.${activeCard.id}.desc`)}
+          />
+        </div>
+      )}
+
+      {/* Controls */}
+      {cards.length > 1 && (
+        <div className="hero-window__controls">
+          <button className="hero-window__arrow" onClick={prev} aria-label="Назад">
+            <ChevronLeft size={16} />
+          </button>
+          <div className="hero-window__dots">
+            {cards.map((c, i) => (
+              <button
+                key={c.id}
+                className={`hero-window__dot${i === activeIdx ? ' hero-window__dot--active' : ''}`}
+                onClick={() => goTo(i)}
+              />
+            ))}
+          </div>
+          <button className="hero-window__arrow" onClick={next} aria-label="Вперёд">
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -217,26 +293,10 @@ function HomePage() {
             </div>
           </div>
           <div className="hero__visual animate-in animate-delay-2">
-            <div className="hero__server-rack">
-              <div className="hero__server-unit">
-                <div className="hero__server-lights"><span className="hero__led hero__led--green" /><span className="hero__led hero__led--green" /><span className="hero__led hero__led--red" /></div>
-                <div className="hero__server-slots"><span /><span /><span /><span /></div>
-              </div>
-              <div className="hero__server-unit">
-                <div className="hero__server-lights"><span className="hero__led hero__led--green" /><span className="hero__led hero__led--green" /><span className="hero__led hero__led--green" /></div>
-                <div className="hero__server-slots"><span /><span /><span /><span /></div>
-              </div>
-              <div className="hero__server-unit">
-                <div className="hero__server-lights"><span className="hero__led hero__led--green" /><span className="hero__led hero__led--red" /><span className="hero__led hero__led--green" /></div>
-                <div className="hero__server-slots"><span /><span /><span /><span /></div>
-              </div>
-            </div>
+            <HeroSlider />
           </div>
         </div>
       </section>
-
-      {/* === SPECIAL SERVICES SLIDER === */}
-      <SpecialServicesSlider />
 
       <section className="section services-preview">
         <div className="container">

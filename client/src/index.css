@@ -30,7 +30,7 @@
   --font-display: 'Arial', 'Helvetica Neue', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Spacing — reduced from 100px to 64px */
+  /* Spacing — reduced */
   --section-padding: 64px 0;
   --container-width: 1200px;
   --radius: 12px;
@@ -138,6 +138,9 @@ button {
   line-height: 1.15;
   margin-bottom: 12px;
   letter-spacing: -0.02em;
+  color: var(--text-primary);
+  -webkit-text-stroke: 1px var(--accent);
+  paint-order: stroke fill;
 }
 
 .section-subtitle {

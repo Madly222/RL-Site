@@ -1,4 +1,6 @@
 {
   "specialImg1": "/images/img-1772527792878.jpg",
-  "specialImg2": "/images/img-1772527796126.jfif"
+  "specialImg2": "/images/img-1772529362707.png",
+  "sliderSpeed": "2500",
+  "sliderCards": "[{\"id\":1},{\"id\":2},{\"id\":3}]"
 }
