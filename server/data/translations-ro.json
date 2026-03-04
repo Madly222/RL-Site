@@ -120,7 +120,7 @@
   "special.label": "Oferte speciale ro",
   "special.title": "Ofertele noastre",
   "special.subtitle": "Gege",
-  "special.1.title": "Mana",
+  "special.1.title": "Servicii de top",
   "categories.service-1772528231663": "Новаяfghfgh услуга",
   "serviceData.service-1772528231663.title": "Новая услуга",
   "serviceData.service-1772528231663.description": "Описание новой услуги",
@@ -128,5 +128,46 @@
     "Пункт 1",
     "Пункт 2"
   ],
-  "special.1.desc": "Creionul mare"
+  "special.1.desc": "Compania ofera servicii bla bla bla",
+  "categories.service-1772532094832": "Ro",
+  "serviceData.service-1772532094832.title": "Ro",
+  "serviceData.service-1772532094832.description": "Ro",
+  "serviceData.service-1772532094832.features": [
+    "Ro",
+    "Пункт 2",
+    "Punct nou"
+  ],
+  "serviceData.service-1772532094832.contentBlocks": [],
+  "planFeatures.service-1772532094832.новый план": [
+    "Функция 1",
+    "Функция 2",
+    "Функция 3"
+  ],
+  "planFeatures.service-1772532094832.ro": [
+    "Ro 1",
+    "Функция 2",
+    "Функция 3"
+  ],
+  "planFeatures.service-1772532094832.ru": [
+    "ro",
+    "Функция 2",
+    "Функция 3"
+  ],
+  "serviceData.security.functions": [
+    "Network Intrusion Detection & Behavior Analysis",
+    "Secure Log Correlation & Event Monitoring",
+    "Encrypted Traffic Inspection & Policy Enforcement"
+  ],
+  "serviceData.security.benefits": [
+    "Reducerea riscurilor de securitate",
+    "Protectie proactiva, nu reactiva",
+    "Control total asupra datelor",
+    "Solutie discreta, fara expunerea tehnologiilor internet, adaptabila pentru orice tip de infrastructura"
+  ],
+  "serviceData.security.contentBlocks": [],
+  "serviceData.security.image": "/images/img-1772546479040.jpg",
+  "special.2.title": "Comanda noastra",
+  "special.2.desc": "Noi oferim suport bla bla bla",
+  "special.3.title": "Actie speciala",
+  "special.3.desc": "Adu un prieten si vei primi o luna de internet gratuita"
 }

@@ -5,6 +5,7 @@ import { useLang } from '../LangContext.jsx';
 import { EditableText, EditableImage } from '../components/Editable.jsx';
 import { EditableIcon, getIcon } from '../components/IconPicker.jsx';
 import { useAdmin } from '../AdminContext.jsx';
+import { useScrollReveal } from '../hooks/useScrollReveal.js';
 import './HomePage.css';
 
 const defaultServiceIcons = { internet: 'wifi', hosting: 'harddrive', vps: 'server', security: 'shield' };
@@ -72,7 +73,6 @@ function HeroSlider() {
     }).catch(() => {});
   };
 
-  // Autoplay — single image fade transition
   useEffect(() => {
     if (isPaused || cards.length <= 1) return;
     timerRef.current = setInterval(() => {
@@ -83,7 +83,6 @@ function HeroSlider() {
 
   const goTo = (idx) => {
     setActiveIdx(idx);
-    // Reset timer on manual navigation
     clearInterval(timerRef.current);
     if (!isPaused && cards.length > 1) {
       timerRef.current = setInterval(() => {
@@ -133,26 +132,20 @@ function HeroSlider() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Gradient border like server rack had */}
       <div className="hero-window__border" />
 
-      {/* Admin gear */}
       {isAdmin && editMode && (
         <button className="hero-window__gear" onClick={() => setShowSettings(!showSettings)}>
           {showSettings ? <X size={14} /> : <Settings size={14} />}
         </button>
       )}
 
-      {/* Admin settings */}
       {isAdmin && editMode && showSettings && (
         <div className="hero-window__settings">
           <div className="hero-window__settings-row">
             <label>Скорость:</label>
-            <input
-              type="range" min="1" max="15" step="0.5"
-              value={speed / 1000}
-              onChange={(e) => handleSpeedChange(e.target.value * 1000)}
-            />
+            <input type="range" min="1" max="15" step="0.5" value={speed / 1000}
+              onChange={(e) => handleSpeedChange(e.target.value * 1000)} />
             <span className="hero-window__speed-val">{(speed / 1000).toFixed(1)}с</span>
           </div>
           <div className="hero-window__settings-row">
@@ -164,16 +157,11 @@ function HeroSlider() {
         </div>
       )}
 
-      {/* Image area */}
       <div className="hero-window__image-area">
         {activeCard && (
           <>
             {isAdmin && editMode && (
-              <button
-                className="hero-window__delete"
-                onClick={() => deleteCard(activeCard.id)}
-                title="Удалить слайд"
-              >
+              <button className="hero-window__delete" onClick={() => deleteCard(activeCard.id)} title="Удалить слайд">
                 <Trash2 size={14} />
               </button>
             )}
@@ -188,42 +176,24 @@ function HeroSlider() {
         )}
       </div>
 
-      {/* Caption */}
       {activeCard && (
         <div className="hero-window__caption">
-          <EditableText
-            value={t(`special.${activeCard.id}.title`) || `Услуга ${activeCard.id}`}
-            tag="div"
-            className="hero-window__caption-title"
-            onSave={s(`special.${activeCard.id}.title`)}
-          />
-          <EditableText
-            value={t(`special.${activeCard.id}.desc`) || 'Описание услуги'}
-            tag="div"
-            className="hero-window__caption-desc"
-            onSave={s(`special.${activeCard.id}.desc`)}
-          />
+          <EditableText value={t(`special.${activeCard.id}.title`) || `Услуга ${activeCard.id}`}
+            tag="div" className="hero-window__caption-title" onSave={s(`special.${activeCard.id}.title`)} />
+          <EditableText value={t(`special.${activeCard.id}.desc`) || 'Описание услуги'}
+            tag="div" className="hero-window__caption-desc" onSave={s(`special.${activeCard.id}.desc`)} />
         </div>
       )}
 
-      {/* Controls */}
       {cards.length > 1 && (
         <div className="hero-window__controls">
-          <button className="hero-window__arrow" onClick={prev} aria-label="Назад">
-            <ChevronLeft size={16} />
-          </button>
+          <button className="hero-window__arrow" onClick={prev} aria-label="Назад"><ChevronLeft size={16} /></button>
           <div className="hero-window__dots">
             {cards.map((c, i) => (
-              <button
-                key={c.id}
-                className={`hero-window__dot${i === activeIdx ? ' hero-window__dot--active' : ''}`}
-                onClick={() => goTo(i)}
-              />
+              <button key={c.id} className={`hero-window__dot${i === activeIdx ? ' hero-window__dot--active' : ''}`} onClick={() => goTo(i)} />
             ))}
           </div>
-          <button className="hero-window__arrow" onClick={next} aria-label="Вперёд">
-            <ChevronRight size={16} />
-          </button>
+          <button className="hero-window__arrow" onClick={next} aria-label="Вперёд"><ChevronRight size={16} /></button>
         </div>
       )}
     </div>
@@ -236,6 +206,11 @@ function HomePage() {
 
   const [svcIcons, setSvcIcons] = useState(defaultServiceIcons);
   const [featIcons, setFeatIcons] = useState(defaultFeatureIcons);
+
+  const servicesRef = useScrollReveal();
+  const pricingRef = useScrollReveal();
+  const featuresRef = useScrollReveal();
+  const ctaRef = useScrollReveal();
 
   useEffect(() => {
     fetch('/api/translations/icons').then(r => r.json()).then(data => {
@@ -270,6 +245,7 @@ function HomePage() {
 
   return (
     <div className="home">
+      {/* ===== HERO — no scroll reveal, plays on load ===== */}
       <section className="hero">
         <div className="hero__bg">
           <div className="hero__grid-lines" />
@@ -298,14 +274,15 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="section services-preview">
+      {/* ===== SERVICES — scroll reveal ===== */}
+      <section className="section services-preview" ref={servicesRef}>
         <div className="container">
-          <EditableText value={t('services.label')} tag="div" className="section-label" onSave={s('services.label')} />
-          <EditableText value={t('services.title')} tag="h2" className="section-title" onSave={s('services.title')} />
-          <EditableText value={t('services.subtitle')} tag="p" className="section-subtitle" onSave={s('services.subtitle')} />
+          <EditableText value={t('services.label')} tag="div" className="section-label reveal reveal-fade" onSave={s('services.label')} />
+          <EditableText value={t('services.title')} tag="h2" className="section-title reveal reveal-fade" onSave={s('services.title')} />
+          <EditableText value={t('services.subtitle')} tag="p" className="section-subtitle reveal reveal-fade" onSave={s('services.subtitle')} />
           <div className="services-preview__grid">
             {Object.keys(defaultServiceIcons).map((id, i) => (
-              <div key={id} className="services-preview__card card animate-in" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div key={id} className={`services-preview__card card reveal reveal-up reveal-d${i + 1}`}>
                 <div className="services-preview__icon">
                   <EditableIcon iconName={svcIcons[id]} size={24} onSave={(val) => saveSvcIcon(id, val)} />
                 </div>
@@ -320,19 +297,20 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="section pricing">
+      {/* ===== PRICING — scroll reveal ===== */}
+      <section className="section pricing" ref={pricingRef}>
         <div className="container">
-          <EditableText value={t('pricing.label')} tag="div" className="section-label" onSave={s('pricing.label')} />
-          <EditableText value={t('pricing.title')} tag="h2" className="section-title" onSave={s('pricing.title')} />
-          <EditableText value={t('pricing.subtitle')} tag="p" className="section-subtitle" onSave={s('pricing.subtitle')} />
+          <EditableText value={t('pricing.label')} tag="div" className="section-label reveal reveal-fade" onSave={s('pricing.label')} />
+          <EditableText value={t('pricing.title')} tag="h2" className="section-title reveal reveal-fade" onSave={s('pricing.title')} />
+          <EditableText value={t('pricing.subtitle')} tag="p" className="section-subtitle reveal reveal-fade" onSave={s('pricing.subtitle')} />
           <div className="pricing__cards">
-            <Link to="/personal#plans" className="pricing__card">
+            <Link to="/personal#plans" className="pricing__card reveal reveal-left reveal-d1">
               <div className="pricing__card-icon"><Users size={32} /></div>
               <EditableText value={t('pricing.personalBtn')} tag="h3" className="pricing__card-title" onSave={s('pricing.personalBtn')} />
               <EditableText value={t('pricing.personalDesc')} tag="p" className="pricing__card-desc" onSave={s('pricing.personalDesc')} />
               <span className="pricing__card-link">{t('services.more')} <ArrowRight size={16} /></span>
             </Link>
-            <Link to="/business#plans" className="pricing__card">
+            <Link to="/business#plans" className="pricing__card reveal reveal-right reveal-d2">
               <div className="pricing__card-icon"><Building size={32} /></div>
               <EditableText value={t('pricing.businessBtn')} tag="h3" className="pricing__card-title" onSave={s('pricing.businessBtn')} />
               <EditableText value={t('pricing.businessDesc')} tag="p" className="pricing__card-desc" onSave={s('pricing.businessDesc')} />
@@ -342,13 +320,14 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="section features">
+      {/* ===== FEATURES — scroll reveal ===== */}
+      <section className="section features" ref={featuresRef}>
         <div className="container">
-          <EditableText value={t('features.label')} tag="div" className="section-label" onSave={s('features.label')} />
-          <EditableText value={t('features.title')} tag="h2" className="section-title" onSave={s('features.title')} />
+          <EditableText value={t('features.label')} tag="div" className="section-label reveal reveal-fade" onSave={s('features.label')} />
+          <EditableText value={t('features.title')} tag="h2" className="section-title reveal reveal-fade" onSave={s('features.title')} />
           <div className="features__grid">
             {featIcons.map((iconName, i) => (
-              <div key={i} className="features__item animate-in" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div key={i} className={`features__item reveal reveal-up reveal-d${i + 1}`}>
                 <div className="features__icon-wrap">
                   <EditableIcon iconName={iconName} size={28} onSave={(val) => saveFeatIcon(i, val)} />
                 </div>
@@ -360,9 +339,10 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="section cta">
+      {/* ===== CTA — scroll reveal ===== */}
+      <section className="section cta" ref={ctaRef}>
         <div className="container">
-          <div className="cta__box">
+          <div className="cta__box reveal reveal-scale">
             <div className="cta__glow" />
             <EditableText value={t('cta.title')} tag="h2" className="cta__title" onSave={s('cta.title')} />
             <EditableText value={t('cta.desc')} tag="p" className="cta__desc" onSave={s('cta.desc')} />

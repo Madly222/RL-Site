@@ -334,5 +334,26 @@
         "included": true
       }
     ]
+  },
+  {
+    "id": "plan-1772532346424",
+    "name": "Ro",
+    "price": 10,
+    "category": "service-1772532094832",
+    "type": "personal",
+    "features": [
+      {
+        "text": "ro",
+        "included": true
+      },
+      {
+        "text": "Функция 2",
+        "included": true
+      },
+      {
+        "text": "Функция 3",
+        "included": false
+      }
+    ]
   }
 ]

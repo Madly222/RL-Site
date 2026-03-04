@@ -1,6 +1,8 @@
 {
-  "specialImg1": "/images/img-1772527792878.jpg",
-  "specialImg2": "/images/img-1772529362707.png",
+  "specialImg1": "/images/img-1772547176938.jpg",
+  "specialImg2": "/images/img-1772547122367.jpg",
   "sliderSpeed": "2500",
-  "sliderCards": "[{\"id\":1},{\"id\":2},{\"id\":3}]"
+  "sliderCards": "[{\"id\":1},{\"id\":2},{\"id\":3}]",
+  "specialImg3": "/images/img-1772546994101.png",
+  "headerLinks": "[{\"id\":1772607742834,\"icon\":\"/images/img-1772607744459.png\",\"url\":\"https://rapidlink.md/\"}]"
 }

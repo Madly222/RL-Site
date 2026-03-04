@@ -19,7 +19,6 @@ function ServicesPage({ type = 'personal' }) {
   const [tabs, setTabs] = useState([]);
   const otherLang = lang === 'ro' ? 'ru' : 'ro';
 
-  // Load tabs from server
   useEffect(() => {
     fetch(`/api/service-tabs/${type}`).then(r => r.json()).then(data => {
       if (Array.isArray(data) && data.length > 0) {
@@ -29,7 +28,6 @@ function ServicesPage({ type = 'personal' }) {
         loadPlans(tab, type);
       }
     }).catch(() => {
-      // Fallback
       const fallback = type === 'personal'
         ? [{ id: 'internet', icon: 'wifi' }]
         : [{ id: 'internet', icon: 'wifi' }, { id: 'hosting', icon: 'harddrive' }, { id: 'vps', icon: 'server' }, { id: 'security', icon: 'shield' }];
@@ -67,12 +65,10 @@ function ServicesPage({ type = 'personal' }) {
     loadPlans(id, type);
   };
 
-  // --- Tab management ---
   const handleAddTab = () => {
     const newId = 'service-' + Date.now();
     const newTabs = [...tabs, { id: newId, icon: 'globe' }];
     saveTabs(newTabs);
-    // Create translations for new tab
     const roName = 'Новая услуга';
     const ruName = 'Новая услуга';
     setTranslation(`categories.${newId}`, roName);
@@ -101,7 +97,6 @@ function ServicesPage({ type = 'personal' }) {
     saveTabs(newTabs);
   };
 
-  // --- Plan CRUD ---
   const handleUpdatePlan = async (planId, field, value) => {
     const plan = plans.find(p => p.id === planId);
     if (!plan) return;
@@ -183,7 +178,6 @@ function ServicesPage({ type = 'personal' }) {
     }
   };
 
-  // --- Feature list helpers ---
   const handleFeatureListEdit = (tKey, items, i, val) => {
     const newArr = [...items];
     newArr[i] = val;
@@ -212,7 +206,6 @@ function ServicesPage({ type = 'personal' }) {
     setTranslationForLang(otherLang, tKey, otherCopy);
   };
 
-  // --- Content blocks ---
   const contentBlocksRaw = t(`serviceData.${activeService}.contentBlocks`);
   const contentBlocks = Array.isArray(contentBlocksRaw) ? contentBlocksRaw : [];
 
@@ -403,7 +396,6 @@ function ServicesPage({ type = 'personal' }) {
             </div>
           )}
 
-          {/* For personal (single tab) show add button too */}
           {tabs.length <= 1 && isAdmin && editMode && (
             <div className="services-page__tabs">
               {tabs.map(tab => {
@@ -426,8 +418,45 @@ function ServicesPage({ type = 'personal' }) {
             </div>
           )}
 
+          {/* ====== PLANS FIRST ====== */}
+          {(activeService !== 'security' && plans.length > 0 || (isAdmin && editMode)) && (
+            <div className="services-page__plans" id="plans">
+              <EditableText value={t('services.plans')} tag="h3" className="services-page__plans-title" onSave={s('services.plans')} />
+              <div className="services-page__plans-grid">
+                {plans.map((plan, i) => (
+                  <PlanCard
+                    key={plan.id}
+                    plan={plan}
+                    delay={i * 0.1}
+                    onDelete={handleDeletePlan}
+                    onUpdate={handleUpdatePlan}
+                  />
+                ))}
+                {isAdmin && editMode && (
+                  <button className="services-page__add-plan" onClick={handleAddPlan}>
+                    <Plus size={32} />
+                    <span>Добавить план</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ====== SERVICE DETAIL SECOND ====== */}
           <div className="services-page__detail animate-in" key={`${type}-${activeService}`}>
             <div className="services-page__detail-info">
+
+	     {activeService === 'security' && (
+                <div className="services-page__detail-image">
+                  <EditableImage
+                    src={t(`serviceData.${activeService}.image`) || ''}
+                    className="services-page__detail-img"
+                    name={`service-${activeService}`}
+                    onSave={(url) => setTranslation(`serviceData.${activeService}.image`, url)}
+                  />
+                </div>
+              )}
+
               <EditableText value={t(`serviceData.${activeService}.title`)} tag="h2" className="services-page__detail-title" onSave={s(`serviceData.${activeService}.title`)} />
               <EditableText value={t(`serviceData.${activeService}.description`)} tag="p" className="services-page__detail-desc" onSave={s(`serviceData.${activeService}.description`)} />
 
@@ -493,7 +522,6 @@ function ServicesPage({ type = 'personal' }) {
                 </>
               )}
 
-              {/* Dynamic content blocks */}
               {contentBlocks.map((block, i) => (
                 <div key={`block-${i}`} className="services-page__content-block">
                   {isAdmin && editMode && (
@@ -572,35 +600,13 @@ function ServicesPage({ type = 'personal' }) {
             </div>
           </div>
 
-          {(plans.length > 0 || (isAdmin && editMode)) && (
-            <div className="services-page__plans" id="plans">
-              <EditableText value={t('services.plans')} tag="h3" className="services-page__plans-title" onSave={s('services.plans')} />
-              <div className="services-page__plans-grid">
-                {plans.map((plan, i) => (
-                  <PlanCard
-                    key={plan.id}
-                    plan={plan}
-                    delay={i * 0.1}
-                    onDelete={handleDeletePlan}
-                    onUpdate={handleUpdatePlan}
-                  />
-                ))}
-                {isAdmin && editMode && (
-                  <button className="services-page__add-plan" onClick={handleAddPlan}>
-                    <Plus size={32} />
-                    <span>Добавить план</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeService === 'security' && (
+	  {activeService === 'security' && (
             <div className="services-page__custom-cta" id="plans">
               <EditableText value={typeof securityCta === 'string' ? securityCta : ''} tag="p" onSave={s(`serviceData.${activeService}.cta`)} />
               <a href="/contact" className="btn btn-primary">{t('services.requestQuote')}</a>
             </div>
           )}
+
         </div>
       </section>
     </div>

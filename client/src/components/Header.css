@@ -251,6 +251,117 @@
   z-index: 10000;
 }
 
+/* ---- Header icon links (between logo and nav) ---- */
+.header__icon-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
+  flex-shrink: 1;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.header__icon-link-wrap {
+  position: relative;
+}
+
+.header__icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: var(--transition);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.header__icon-link:hover {
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+
+.header__icon-link-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.header__icon-link--empty,
+.header__icon-link--add {
+  border-style: dashed;
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+  cursor: pointer;
+  background: transparent;
+}
+
+.header__icon-link--add:hover,
+.header__icon-link--empty:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.header__icon-link-actions {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  gap: 2px;
+  z-index: 5;
+}
+
+.header__icon-link-edit,
+.header__icon-link-delete {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  transition: var(--transition);
+}
+
+.header__icon-link-edit {
+  background: var(--accent);
+  color: #fff;
+}
+
+.header__icon-link-delete {
+  background: #dc2626;
+  color: #fff;
+}
+
+.header__icon-link-edit:hover { transform: scale(1.15); }
+.header__icon-link-delete:hover { transform: scale(1.15); }
+
+.header__icon-link-url {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  width: 140px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  text-align: center;
+  z-index: 10;
+  font-family: var(--font-mono);
+}
+
+.header__icon-link-url:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 @media (max-width: 768px) {
   .header__burger {
     display: block;
@@ -309,5 +420,9 @@
     left: 50%;
     transform: translateX(-50%);
     right: auto;
+  }
+
+  .header__icon-links {
+    display: none;
   }
 }

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, CreditCard, ChevronDown, Sun, Moon, Info } from 'lucide-react';
+import { Menu, X, CreditCard, ChevronDown, Sun, Moon, Info, Plus, Trash2, Edit3 } from 'lucide-react';
 import { useLang } from '../LangContext.jsx';
 import { useTheme } from '../ThemeContext.jsx';
+import { useAdmin } from '../AdminContext.jsx';
 import './Header.css';
 
 const FlagMD = () => (
@@ -30,6 +31,9 @@ function Header() {
   const location = useLocation();
   const { lang, toggleLang, t } = useLang();
   const { theme, toggleTheme } = useTheme();
+  const { isAdmin, editMode } = useAdmin();
+
+  const [headerLinks, setHeaderLinks] = useState([]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -62,6 +66,55 @@ function Header() {
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
 
+  // Load header icon links
+  useEffect(() => {
+    fetch('/api/translations/icons').then(r => r.json()).then(data => {
+      if (data.headerLinks) {
+        try { setHeaderLinks(JSON.parse(data.headerLinks)); } catch { setHeaderLinks([]); }
+      }
+    }).catch(() => {});
+  }, []);
+
+  const saveHeaderLinks = (links) => {
+    setHeaderLinks(links);
+    fetch('/api/translations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: 'icons', key: 'headerLinks', value: JSON.stringify(links) })
+    }).catch(() => {});
+  };
+
+  const addHeaderLink = () => {
+    saveHeaderLinks([...headerLinks, { id: Date.now(), icon: '', url: '' }]);
+  };
+
+  const deleteHeaderLink = (id) => {
+    saveHeaderLinks(headerLinks.filter(l => l.id !== id));
+  };
+
+  const updateHeaderLink = (id, field, value) => {
+    saveHeaderLinks(headerLinks.map(l => l.id === id ? { ...l, [field]: value } : l));
+  };
+
+  const handleIconUpload = (id) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('name', 'header-link-' + id);
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.url) updateHeaderLink(id, 'icon', data.url);
+      } catch {}
+    };
+    input.click();
+  };
+
   const navLinks = [
     { path: '/', label: t('nav.home') },
     { path: '/personal', label: t('nav.personal') },
@@ -78,6 +131,54 @@ function Header() {
             Rapid<span className="header__logo-accent">Link</span>
           </span>
         </Link>
+
+        {/* Icon links between logo and nav */}
+        {(headerLinks.length > 0 || (isAdmin && editMode)) && (
+          <div className="header__icon-links">
+            {headerLinks.map(link => (
+              <div key={link.id} className="header__icon-link-wrap">
+                {link.icon ? (
+                  <a href={link.url || '#'} target="_blank" rel="noopener noreferrer" className="header__icon-link" title={link.url}>
+                    <img src={link.icon} alt="" className="header__icon-link-img" />
+                  </a>
+                ) : (
+                  isAdmin && editMode && (
+                    <button className="header__icon-link header__icon-link--empty" onClick={() => handleIconUpload(link.id)}>
+                      <Plus size={16} />
+                    </button>
+                  )
+                )}
+                {isAdmin && editMode && (
+                  <div className="header__icon-link-actions">
+                    {link.icon && (
+                      <button className="header__icon-link-edit" onClick={() => handleIconUpload(link.id)} title="Заменить иконку">
+                        <Edit3 size={10} />
+                      </button>
+                    )}
+                    <button className="header__icon-link-delete" onClick={() => deleteHeaderLink(link.id)} title="Удалить">
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
+                )}
+                {isAdmin && editMode && (
+                  <input
+                    className="header__icon-link-url"
+                    type="text"
+                    placeholder="URL..."
+                    value={link.url || ''}
+                    onChange={(e) => updateHeaderLink(link.id, 'url', e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
+              </div>
+            ))}
+            {isAdmin && editMode && (
+              <button className="header__icon-link header__icon-link--add" onClick={addHeaderLink} title="Добавить иконку">
+                <Plus size={18} />
+              </button>
+            )}
+          </div>
+        )}
 
         <nav className={`header__nav ${menuOpen ? 'header__nav--open' : ''}`}>
           {navLinks.map(link => (

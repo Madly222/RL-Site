@@ -126,5 +126,36 @@
     "Пункт 2"
   ],
   "special.2.desc": "specialru",
-  "special.1.desc": "Карандаш"
+  "special.1.desc": "Карандаш",
+  "categories.service-1772532094832": "ru",
+  "serviceData.service-1772532094832.title": "ru",
+  "serviceData.service-1772532094832.description": "ru",
+  "serviceData.service-1772532094832.features": [
+    "ru",
+    "Пункт 2",
+    "Новый пункт"
+  ],
+  "serviceData.service-1772532094832.contentBlocks": [],
+  "planFeatures.service-1772532094832.новый план": [
+    "Функция 1",
+    "Функция 2",
+    "Функция 3"
+  ],
+  "planFeatures.service-1772532094832.ro": [
+    "ru",
+    "Функция 2",
+    "Функция 3"
+  ],
+  "serviceData.security.functions": [
+    "Network Intrusion Detection & Behavior Analysis",
+    "Secure Log Correlation & Event Monitoring",
+    "Encrypted Traffic Inspection & Policy Enforcement"
+  ],
+  "serviceData.security.benefits": [
+    "Снижение рисков безопасности",
+    "Проактивная защита, а не реактивная",
+    "Полный контроль над данными",
+    "Дискретное решение без раскрытия интернет-технологий, адаптируемое для любой инфраструктуры"
+  ],
+  "serviceData.security.contentBlocks": []
 }
