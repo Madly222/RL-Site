@@ -105,7 +105,6 @@
 
 /* ========================================
    HERO WINDOW — compact photo slider
-   Same position/size as old server rack
    ======================================== */
 .hero-window {
   position: relative;
@@ -117,7 +116,6 @@
   box-shadow: 0 20px 80px var(--shadow), 0 0 60px var(--accent-glow);
 }
 
-/* Gradient top border like server rack */
 .hero-window__border {
   position: absolute;
   inset: -1px;
@@ -132,7 +130,6 @@
   z-index: 3;
 }
 
-/* --- Image area --- */
 .hero-window__image-area {
   position: relative;
   width: 100%;
@@ -160,7 +157,6 @@
   z-index: 4;
 }
 
-/* Delete button */
 .hero-window__delete {
   position: absolute;
   top: 8px;
@@ -183,7 +179,6 @@
   transform: scale(1.1);
 }
 
-/* --- Caption --- */
 .hero-window__caption {
   padding: 16px 20px 8px;
 }
@@ -201,7 +196,6 @@
   line-height: 1.5;
 }
 
-/* --- Controls (arrows + dots) --- */
 .hero-window__controls {
   display: flex;
   align-items: center;
@@ -261,7 +255,6 @@
   background: var(--text-muted);
 }
 
-/* --- Admin gear button --- */
 .hero-window__gear {
   position: absolute;
   top: 8px;
@@ -284,7 +277,6 @@
   transform: scale(1.1);
 }
 
-/* --- Admin settings panel --- */
 .hero-window__settings {
   position: absolute;
   top: 42px;
@@ -378,7 +370,7 @@
 }
 
 .stats__item:hover {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, var(--accent-subtle) 0%, var(--bg-card) 100%);
 }
 
 .stats__value {
@@ -406,6 +398,13 @@
 
 .services-preview__card {
   text-align: left;
+}
+
+.services-preview__card.card:hover {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--accent-subtle) 100%);
+  border-color: rgba(255, 0, 0, 0.2);
+  box-shadow: 0 8px 32px var(--accent-glow);
+  transform: translateY(-4px);
 }
 
 .services-preview__icon {
@@ -472,8 +471,9 @@
 
 .pricing__card:hover {
   transform: translateY(-6px);
-  border-color: var(--border-hover);
-  background: var(--bg-card-hover);
+  border-color: rgba(255, 0, 0, 0.25);
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--accent-subtle) 100%);
+  box-shadow: 0 12px 40px var(--accent-glow);
 }
 
 .pricing__card--accent {
@@ -545,8 +545,10 @@
 }
 
 .features__item:hover {
-  border-color: var(--border-hover);
+  border-color: rgba(255, 0, 0, 0.2);
   transform: translateY(-4px);
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--accent-subtle) 100%);
+  box-shadow: 0 8px 32px var(--accent-glow);
 }
 
 .features__icon-wrap {
@@ -612,6 +614,27 @@
   margin-left: auto;
   margin-right: auto;
   position: relative;
+}
+
+/* ===== SECTION DIVIDERS ===== */
+.services-preview::after,
+.pricing::after,
+.features::after {
+  content: '';
+  display: block;
+  width: 100%;
+  max-width: 800px;
+  height: 1px;
+  margin: 0 auto;
+  margin-top: 64px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--border-hover) 20%,
+    var(--accent) 50%,
+    var(--border-hover) 80%,
+    transparent 100%
+  );
+  opacity: 0.5;
 }
 
 /* ===== RESPONSIVE ===== */
@@ -688,5 +711,11 @@
 
   .pricing__cards {
     grid-template-columns: 1fr;
+  }
+
+  .services-preview::after,
+  .pricing::after,
+  .features::after {
+    margin-top: 40px;
   }
 }

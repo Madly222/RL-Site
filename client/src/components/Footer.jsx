@@ -14,8 +14,8 @@ function Footer() {
         <div className="footer__grid">
           <div className="footer__brand">
             <Link to="/" className="footer__logo">
-              <img src="/images/logo.png" alt="RapidLink" className="footer__logo-img" />
-              <span>Rapid<span style={{ color: 'var(--accent)' }}>Link</span></span>
+              
+              <span>Rapid<span style={{ color: 'var(--accent)' }}> Link</span></span>
             </Link>
             <p className="footer__slogan">The best connection ever</p>
             <EditableText value={t('footer.desc')} tag="p" className="footer__desc" onSave={s('footer.desc')} />

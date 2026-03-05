@@ -130,7 +130,7 @@ export const ro = {
     },
     security: {
       title: 'Network Security',
-      description: 'Advanced Network Security este un serviciu profesional de securitate cibernetica oferit de RapidLink, creat pentru a proteja infrastructura IT impotriva atacurilor, accesului neautorizat si activitatilor suspecte din retea.',
+      description: 'Advanced Network Security este un serviciu profesional de securitate cibernetica oferit de Rapid Link, creat pentru a proteja infrastructura IT impotriva atacurilor, accesului neautorizat si activitatilor suspecte din retea.',
       benefitsTitle: 'Beneficii pentru afacerea ta:',
       benefits: [
         'Reducerea riscurilor de securitate',
@@ -144,7 +144,7 @@ export const ro = {
         'Secure Log Correlation & Event Monitoring',
         'Encrypted Traffic Inspection & Policy Enforcement'
       ],
-      cta: 'Advanced Network Security de la RapidLink ofera siguranta, control si liniste, intr-un mediu digital tot mai complex.',
+      cta: 'Advanced Network Security de la Rapid Link ofera siguranta, control si liniste, intr-un mediu digital tot mai complex.',
       features: []
     }
   },

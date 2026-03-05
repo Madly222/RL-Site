@@ -127,9 +127,6 @@ function Header() {
       <div className="container header__inner">
         <Link to="/" className="header__logo">
           <img src="/images/logo.png" alt="RapidLink" className="header__logo-img" />
-          <span className="header__logo-text">
-            Rapid<span className="header__logo-accent">Link</span>
-          </span>
         </Link>
 
         {/* Icon links between logo and nav */}

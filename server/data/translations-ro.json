@@ -165,9 +165,12 @@
     "Solutie discreta, fara expunerea tehnologiilor internet, adaptabila pentru orice tip de infrastructura"
   ],
   "serviceData.security.contentBlocks": [],
-  "serviceData.security.image": "/images/img-1772546479040.jpg",
+  "serviceData.security.image": "/images/img-1772628177204.png",
   "special.2.title": "Comanda noastra",
   "special.2.desc": "Noi oferim suport bla bla bla",
   "special.3.title": "Actie speciala",
-  "special.3.desc": "Adu un prieten si vei primi o luna de internet gratuita"
+  "special.3.desc": "Adu un prieten si vei primi o luna de internet gratuita",
+  "serviceData.security.description": "Advanced Network Security este un serviciu profesional de securitate cibernetica oferit de RapidLink.",
+  "footer.desc": "Internet fiabil si solutii server pentru afacerea dvs. Activam din 2008.",
+  "hero.subtitle": "Internet de mare viteza si hosting securizat pentru afacerea dvs. Peste 100 de clienti ne incredinteaza infrastructura lor."
 }

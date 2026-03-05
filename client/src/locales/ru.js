@@ -130,7 +130,7 @@ export const ru = {
     },
     security: {
       title: 'Сетевая безопасность',
-      description: 'Advanced Network Security — профессиональный сервис кибербезопасности от RapidLink, созданный для защиты IT-инфраструктуры от атак, несанкционированного доступа и подозрительной сетевой активности.',
+      description: 'Advanced Network Security — профессиональный сервис кибербезопасности от Rapid Link, созданный для защиты IT-инфраструктуры от атак, несанкционированного доступа и подозрительной сетевой активности.',
       benefitsTitle: 'Преимущества для вашего бизнеса:',
       benefits: [
         'Снижение рисков безопасности',
@@ -144,7 +144,7 @@ export const ru = {
         'Secure Log Correlation & Event Monitoring',
         'Encrypted Traffic Inspection & Policy Enforcement'
       ],
-      cta: 'Advanced Network Security от RapidLink обеспечивает безопасность, контроль и спокойствие в условиях всё более сложной цифровой среды.',
+      cta: 'Advanced Network Security от Rapid Link обеспечивает безопасность, контроль и спокойствие в условиях всё более сложной цифровой среды.',
       features: []
     }
   },

@@ -11,7 +11,6 @@
 .header--scrolled {
   padding: 12px 0;
   background: var(--header-bg);
-  backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
 }
 
@@ -117,7 +116,7 @@
   padding: 6px;
   min-width: 220px;
   box-shadow: 0 16px 48px var(--shadow);
-  animation: fadeInUp 0.2s ease;
+  animation: fadeIn 0.2s ease;
   z-index: 100;
 }
 
@@ -184,7 +183,7 @@
   font-size: 0.8rem;
   color: var(--text-secondary);
   line-height: 1.5;
-  animation: fadeInUp 0.2s ease;
+  animation: fadeIn 0.2s ease;
 }
 
 .header__pay-tooltip strong {
@@ -251,7 +250,7 @@
   z-index: 10000;
 }
 
-/* ---- Header icon links (between logo and nav) ---- */
+/* ---- Header icon links ---- */
 .header__icon-links {
   display: flex;
   align-items: center;

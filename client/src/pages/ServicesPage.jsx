@@ -9,6 +9,67 @@ import { EditableIcon, getIcon } from '../components/IconPicker.jsx';
 import PlanCard from '../components/PlanCard.jsx';
 import './ServicesPage.css';
 
+function BannerImage({ type }) {
+  const { isAdmin, editMode } = useAdmin();
+  const defaultSrc = type === 'personal' ? '/images/banner-personal.png' : '/images/banner-business.png';
+  const [src, setSrc] = useState(defaultSrc);
+  const [hasError, setHasError] = useState(false);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    const newSrc = type === 'personal' ? '/images/banner-personal.png' : '/images/banner-business.png';
+    setSrc(newSrc);
+    setHasError(false);
+    setChecked(false);
+    const img = new Image();
+    img.onload = () => { setChecked(true); setHasError(false); };
+    img.onerror = () => { setChecked(true); setHasError(true); };
+    img.src = newSrc;
+  }, [type]);
+
+  const handleUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('name', type === 'personal' ? 'banner-personal' : 'banner-business');
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.url) { setSrc(data.url); setHasError(false); }
+      } catch {}
+    };
+    input.click();
+  };
+
+  if (!checked) return null;
+
+  if (hasError) {
+    if (isAdmin && editMode) {
+      return (
+        <div className="services-page__banner-placeholder" onClick={handleUpload}>
+          <Plus size={32} />
+          <span>Загрузить баннер</span>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  return (
+    <EditableImage
+      src={src}
+      className="services-page__banner-img"
+      name={type === 'personal' ? 'banner-personal' : 'banner-business'}
+      onSave={(url) => { if (url) { setSrc(url); setHasError(false); } }}
+    />
+  );
+}
+
 function ServicesPage({ type = 'personal' }) {
   const { t, lang, setTranslation, tLang, setTranslationForLang } = useLang();
   const { isAdmin, editMode } = useAdmin();
@@ -100,12 +161,13 @@ function ServicesPage({ type = 'personal' }) {
   const handleUpdatePlan = async (planId, field, value) => {
     const plan = plans.find(p => p.id === planId);
     if (!plan) return;
-
     let update = {};
     if (field === 'name') {
       update.name = value;
     } else if (field === 'price') {
       update.price = value;
+    } else if (field === 'image') {
+      update.image = value;
     } else if (field.startsWith('feature-') && !field.startsWith('feature-toggle') && !field.startsWith('feature-delete')) {
       const idx = parseInt(field.split('-')[1]);
       const newFeatures = [...plan.features];
@@ -124,7 +186,6 @@ function ServicesPage({ type = 'personal' }) {
       const newFeatures = [...plan.features, { text: 'Новый пункт', included: true }];
       update.features = newFeatures;
     }
-
     try {
       await api.updatePlan(planId, update);
       loadPlans(activeService, type);
@@ -147,31 +208,17 @@ function ServicesPage({ type = 'personal' }) {
     const planName = 'Новый план';
     const planKey = planName.toLowerCase();
     const features = ['Функция 1', 'Функция 2', 'Функция 3'];
-    
     try {
       await api.addPlan({
-        name: planName,
-        price: 100,
-        category: activeService,
-        type: type,
+        name: planName, price: 100, category: activeService, type: type,
         features: [
           { text: 'Функция 1', included: true },
           { text: 'Функция 2', included: true },
           { text: 'Функция 3', included: false }
         ]
       });
-
-      fetch('/api/translations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang: 'ro', key: `planFeatures.${activeService}.${planKey}`, value: features })
-      });
-      fetch('/api/translations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang: 'ru', key: `planFeatures.${activeService}.${planKey}`, value: features })
-      });
-
+      fetch('/api/translations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: 'ro', key: `planFeatures.${activeService}.${planKey}`, value: features }) });
+      fetch('/api/translations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: 'ru', key: `planFeatures.${activeService}.${planKey}`, value: features }) });
       loadPlans(activeService, type);
     } catch (err) {
       console.error('Failed to add plan:', err);
@@ -212,119 +259,25 @@ function ServicesPage({ type = 'personal' }) {
   const handleAddContentBlock = (blockType) => {
     const tKey = `serviceData.${activeService}.contentBlocks`;
     let newBlock, otherBlock;
-
-    if (blockType === 'image') {
-      newBlock = { type: 'image', src: '' };
-      otherBlock = { type: 'image', src: '' };
-    } else if (blockType === 'section') {
-      const title = lang === 'ro' ? 'Titlu nou' : 'Новый заголовок';
-      const desc = lang === 'ro' ? 'Descriere nouă' : 'Новое описание';
-      const features = lang === 'ro' ? ['Punct 1', 'Punct 2'] : ['Пункт 1', 'Пункт 2'];
-      const otherTitle = lang === 'ro' ? 'Новый заголовок' : 'Titlu nou';
-      const otherDesc = lang === 'ro' ? 'Новое описание' : 'Descriere nouă';
-      const otherFeatures = lang === 'ro' ? ['Пункт 1', 'Пункт 2'] : ['Punct 1', 'Punct 2'];
-      newBlock = { type: 'section', title, description: desc, features };
-      otherBlock = { type: 'section', title: otherTitle, description: otherDesc, features: otherFeatures };
+    if (blockType === 'image') { newBlock = { type: 'image', src: '' }; otherBlock = { type: 'image', src: '' }; }
+    else if (blockType === 'section') {
+      const title = lang === 'ro' ? 'Titlu nou' : 'Новый заголовок'; const desc = lang === 'ro' ? 'Descriere nouă' : 'Новое описание'; const features = lang === 'ro' ? ['Punct 1', 'Punct 2'] : ['Пункт 1', 'Пункт 2'];
+      const otherTitle = lang === 'ro' ? 'Новый заголовок' : 'Titlu nou'; const otherDesc = lang === 'ro' ? 'Новое описание' : 'Descriere nouă'; const otherFeatures = lang === 'ro' ? ['Пункт 1', 'Пункт 2'] : ['Punct 1', 'Punct 2'];
+      newBlock = { type: 'section', title, description: desc, features }; otherBlock = { type: 'section', title: otherTitle, description: otherDesc, features: otherFeatures };
     } else {
-      const text = lang === 'ro' ? 'Text nou' : 'Новый текст';
-      const otherText = lang === 'ro' ? 'Новый текст' : 'Text nou';
-      newBlock = { type: 'text', text };
-      otherBlock = { type: 'text', text: otherText };
+      const text = lang === 'ro' ? 'Text nou' : 'Новый текст'; const otherText = lang === 'ro' ? 'Новый текст' : 'Text nou';
+      newBlock = { type: 'text', text }; otherBlock = { type: 'text', text: otherText };
     }
-
-    const newArr = [...contentBlocks, newBlock];
-    setTranslation(tKey, newArr);
-    const otherBlocks = tLang(otherLang, tKey);
-    const otherArr = Array.isArray(otherBlocks) ? [...otherBlocks, otherBlock] : [otherBlock];
-    setTranslationForLang(otherLang, tKey, otherArr);
+    const newArr = [...contentBlocks, newBlock]; setTranslation(tKey, newArr);
+    const otherBlocks = tLang(otherLang, tKey); const otherArr = Array.isArray(otherBlocks) ? [...otherBlocks, otherBlock] : [otherBlock]; setTranslationForLang(otherLang, tKey, otherArr);
   };
 
-  const handleDeleteContentBlock = (i) => {
-    const tKey = `serviceData.${activeService}.contentBlocks`;
-    const newArr = [...contentBlocks];
-    newArr.splice(i, 1);
-    setTranslation(tKey, newArr);
-    const otherBlocks = tLang(otherLang, tKey);
-    if (Array.isArray(otherBlocks)) {
-      const copy = [...otherBlocks];
-      copy.splice(i, 1);
-      setTranslationForLang(otherLang, tKey, copy);
-    }
-  };
-
-  const handleEditContentBlock = (i, field, val) => {
-    const tKey = `serviceData.${activeService}.contentBlocks`;
-    const newArr = [...contentBlocks];
-    newArr[i] = { ...newArr[i], [field]: val };
-    setTranslation(tKey, newArr);
-  };
-
-  const handleContentBlockFeatureEdit = (blockIdx, featIdx, val) => {
-    const tKey = `serviceData.${activeService}.contentBlocks`;
-    const newArr = [...contentBlocks];
-    const features = [...(newArr[blockIdx].features || [])];
-    features[featIdx] = val;
-    newArr[blockIdx] = { ...newArr[blockIdx], features };
-    setTranslation(tKey, newArr);
-  };
-
-  const handleContentBlockFeatureDelete = (blockIdx, featIdx) => {
-    const tKey = `serviceData.${activeService}.contentBlocks`;
-    const newArr = [...contentBlocks];
-    const features = [...(newArr[blockIdx].features || [])];
-    features.splice(featIdx, 1);
-    newArr[blockIdx] = { ...newArr[blockIdx], features };
-    setTranslation(tKey, newArr);
-
-    const otherBlocks = tLang(otherLang, tKey);
-    if (Array.isArray(otherBlocks) && otherBlocks[blockIdx]) {
-      const copy = [...otherBlocks];
-      const oFeats = [...(copy[blockIdx].features || [])];
-      oFeats.splice(featIdx, 1);
-      copy[blockIdx] = { ...copy[blockIdx], features: oFeats };
-      setTranslationForLang(otherLang, tKey, copy);
-    }
-  };
-
-  const handleContentBlockFeatureAdd = (blockIdx) => {
-    const tKey = `serviceData.${activeService}.contentBlocks`;
-    const newArr = [...contentBlocks];
-    const features = [...(newArr[blockIdx].features || [])];
-    features.push(lang === 'ro' ? 'Punct nou' : 'Новый пункт');
-    newArr[blockIdx] = { ...newArr[blockIdx], features };
-    setTranslation(tKey, newArr);
-
-    const otherBlocks = tLang(otherLang, tKey);
-    if (Array.isArray(otherBlocks) && otherBlocks[blockIdx]) {
-      const copy = [...otherBlocks];
-      const oFeats = [...(copy[blockIdx].features || [])];
-      oFeats.push(lang === 'ro' ? 'Новый пункт' : 'Punct nou');
-      copy[blockIdx] = { ...copy[blockIdx], features: oFeats };
-      setTranslationForLang(otherLang, tKey, copy);
-    }
-  };
-
-  const handleContentImageUpload = async (i, file) => {
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('name', `content-${activeService}-${i}-${Date.now()}`);
-    try {
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.url) {
-        const tKey = `serviceData.${activeService}.contentBlocks`;
-        const newArr = [...contentBlocks];
-        newArr[i] = { ...newArr[i], src: data.url };
-        setTranslation(tKey, newArr);
-        const otherBlocks = tLang(otherLang, tKey);
-        if (Array.isArray(otherBlocks) && otherBlocks[i]) {
-          const copy = [...otherBlocks];
-          copy[i] = { ...copy[i], src: data.url };
-          setTranslationForLang(otherLang, tKey, copy);
-        }
-      }
-    } catch {}
-  };
+  const handleDeleteContentBlock = (i) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; newArr.splice(i, 1); setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); if (Array.isArray(otherBlocks)) { const copy = [...otherBlocks]; copy.splice(i, 1); setTranslationForLang(otherLang, tKey, copy); } };
+  const handleEditContentBlock = (i, field, val) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; newArr[i] = { ...newArr[i], [field]: val }; setTranslation(tKey, newArr); };
+  const handleContentBlockFeatureEdit = (blockIdx, featIdx, val) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; const features = [...(newArr[blockIdx].features || [])]; features[featIdx] = val; newArr[blockIdx] = { ...newArr[blockIdx], features }; setTranslation(tKey, newArr); };
+  const handleContentBlockFeatureDelete = (blockIdx, featIdx) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; const features = [...(newArr[blockIdx].features || [])]; features.splice(featIdx, 1); newArr[blockIdx] = { ...newArr[blockIdx], features }; setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); if (Array.isArray(otherBlocks) && otherBlocks[blockIdx]) { const copy = [...otherBlocks]; const oFeats = [...(copy[blockIdx].features || [])]; oFeats.splice(featIdx, 1); copy[blockIdx] = { ...copy[blockIdx], features: oFeats }; setTranslationForLang(otherLang, tKey, copy); } };
+  const handleContentBlockFeatureAdd = (blockIdx) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; const features = [...(newArr[blockIdx].features || [])]; features.push(lang === 'ro' ? 'Punct nou' : 'Новый пункт'); newArr[blockIdx] = { ...newArr[blockIdx], features }; setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); if (Array.isArray(otherBlocks) && otherBlocks[blockIdx]) { const copy = [...otherBlocks]; const oFeats = [...(copy[blockIdx].features || [])]; oFeats.push(lang === 'ro' ? 'Новый пункт' : 'Punct nou'); copy[blockIdx] = { ...copy[blockIdx], features: oFeats }; setTranslationForLang(otherLang, tKey, copy); } };
+  const handleContentImageUpload = async (i, file) => { const formData = new FormData(); formData.append('image', file); formData.append('name', `content-${activeService}-${i}-${Date.now()}`); try { const res = await fetch('/api/upload', { method: 'POST', body: formData }); const data = await res.json(); if (data.url) { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; newArr[i] = { ...newArr[i], src: data.url }; setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); if (Array.isArray(otherBlocks) && otherBlocks[i]) { const copy = [...otherBlocks]; copy[i] = { ...copy[i], src: data.url }; setTranslationForLang(otherLang, tKey, copy); } } } catch {} };
 
   const pageTitle = type === 'personal' ? t('services.personalTitle') : t('services.businessTitle');
   const pageSubtitle = type === 'personal' ? t('services.personalSubtitle') : t('services.businessSubtitle');
@@ -334,11 +287,9 @@ function ServicesPage({ type = 'personal' }) {
   const benefitsTitle = t(`serviceData.${activeService}.benefitsTitle`);
   const functionsTitle = t(`serviceData.${activeService}.functionsTitle`);
   const securityCta = t(`serviceData.${activeService}.cta`);
-
   const featuresKey = `serviceData.${activeService}.features`;
   const benefitsKey = `serviceData.${activeService}.benefits`;
   const functionsKey = `serviceData.${activeService}.functions`;
-
   const currentTab = tabs.find(t => t.id === activeService);
 
   return (
@@ -353,11 +304,7 @@ function ServicesPage({ type = 'personal' }) {
       </section>
 
       <div className="services-page__banner">
-        <EditableImage
-          src={type === 'personal' ? '/images/banner-personal.png' : '/images/banner-business.png'}
-          className="services-page__banner-img"
-          name={type === 'personal' ? 'banner-personal' : 'banner-business'}
-        />
+        <BannerImage type={type} />
       </div>
 
       <section className="section">
@@ -368,31 +315,17 @@ function ServicesPage({ type = 'personal' }) {
                 const Icon = getIcon(tab.icon);
                 return (
                   <div key={tab.id} className={`services-page__tab-wrap ${activeService === tab.id ? 'services-page__tab-wrap--active' : ''}`}>
-                    <button
-                      className={`services-page__tab ${activeService === tab.id ? 'services-page__tab--active' : ''}`}
-                      onClick={() => handleServiceClick(tab.id)}
-                    >
-                      {isAdmin && editMode ? (
-                        <EditableIcon iconName={tab.icon} size={20} onSave={(val) => handleTabIconChange(tab.id, val)} />
-                      ) : (
-                        <Icon size={20} />
-                      )}
+                    <button className={`services-page__tab ${activeService === tab.id ? 'services-page__tab--active' : ''}`} onClick={() => handleServiceClick(tab.id)}>
+                      {isAdmin && editMode ? (<EditableIcon iconName={tab.icon} size={20} onSave={(val) => handleTabIconChange(tab.id, val)} />) : (<Icon size={20} />)}
                       <EditableText value={t(`categories.${tab.id}`)} tag="span" onSave={s(`categories.${tab.id}`)} />
                     </button>
                     {isAdmin && editMode && tabs.length > 1 && (
-                      <button className="services-page__tab-delete" onClick={() => handleDeleteTab(tab.id)} title="Удалить услугу">
-                        <Trash2 size={12} />
-                      </button>
+                      <button className="services-page__tab-delete" onClick={() => handleDeleteTab(tab.id)} title="Удалить услугу"><Trash2 size={12} /></button>
                     )}
                   </div>
                 );
               })}
-              {isAdmin && editMode && (
-                <button className="services-page__tab services-page__tab--add" onClick={handleAddTab}>
-                  <Plus size={20} />
-                  <span>Добавить</span>
-                </button>
-              )}
+              {isAdmin && editMode && (<button className="services-page__tab services-page__tab--add" onClick={handleAddTab}><Plus size={20} /><span>Добавить</span></button>)}
             </div>
           )}
 
@@ -402,61 +335,31 @@ function ServicesPage({ type = 'personal' }) {
                 const Icon = getIcon(tab.icon);
                 return (
                   <button key={tab.id} className="services-page__tab services-page__tab--active">
-                    {isAdmin && editMode ? (
-                      <EditableIcon iconName={tab.icon} size={20} onSave={(val) => handleTabIconChange(tab.id, val)} />
-                    ) : (
-                      <Icon size={20} />
-                    )}
+                    {isAdmin && editMode ? (<EditableIcon iconName={tab.icon} size={20} onSave={(val) => handleTabIconChange(tab.id, val)} />) : (<Icon size={20} />)}
                     <EditableText value={t(`categories.${tab.id}`)} tag="span" onSave={s(`categories.${tab.id}`)} />
                   </button>
                 );
               })}
-              <button className="services-page__tab services-page__tab--add" onClick={handleAddTab}>
-                <Plus size={20} />
-                <span>Добавить</span>
-              </button>
+              <button className="services-page__tab services-page__tab--add" onClick={handleAddTab}><Plus size={20} /><span>Добавить</span></button>
             </div>
           )}
 
-          {/* ====== PLANS FIRST ====== */}
-          {(activeService !== 'security' && plans.length > 0 || (isAdmin && editMode)) && (
+          {/* ====== PLANS (not for security) ====== */}
+          {activeService !== 'security' && (plans.length > 0 || (isAdmin && editMode)) && (
             <div className="services-page__plans" id="plans">
               <EditableText value={t('services.plans')} tag="h3" className="services-page__plans-title" onSave={s('services.plans')} />
               <div className="services-page__plans-grid">
                 {plans.map((plan, i) => (
-                  <PlanCard
-                    key={plan.id}
-                    plan={plan}
-                    delay={i * 0.1}
-                    onDelete={handleDeletePlan}
-                    onUpdate={handleUpdatePlan}
-                  />
+                  <PlanCard key={plan.id} plan={plan} delay={i * 0.1} onDelete={handleDeletePlan} onUpdate={handleUpdatePlan} />
                 ))}
-                {isAdmin && editMode && (
-                  <button className="services-page__add-plan" onClick={handleAddPlan}>
-                    <Plus size={32} />
-                    <span>Добавить план</span>
-                  </button>
-                )}
+                {isAdmin && editMode && (<button className="services-page__add-plan" onClick={handleAddPlan}><Plus size={32} /><span>Добавить план</span></button>)}
               </div>
             </div>
           )}
 
-          {/* ====== SERVICE DETAIL SECOND ====== */}
+          {/* ====== SERVICE DETAIL ====== */}
           <div className="services-page__detail animate-in" key={`${type}-${activeService}`}>
             <div className="services-page__detail-info">
-
-	     {activeService === 'security' && (
-                <div className="services-page__detail-image">
-                  <EditableImage
-                    src={t(`serviceData.${activeService}.image`) || ''}
-                    className="services-page__detail-img"
-                    name={`service-${activeService}`}
-                    onSave={(url) => setTranslation(`serviceData.${activeService}.image`, url)}
-                  />
-                </div>
-              )}
-
               <EditableText value={t(`serviceData.${activeService}.title`)} tag="h2" className="services-page__detail-title" onSave={s(`serviceData.${activeService}.title`)} />
               <EditableText value={t(`serviceData.${activeService}.description`)} tag="p" className="services-page__detail-desc" onSave={s(`serviceData.${activeService}.description`)} />
 
@@ -469,17 +372,11 @@ function ServicesPage({ type = 'personal' }) {
                         <li key={`${benefitsKey}-${i}-${f}`} className="services-page__feature-item">
                           <Check size={16} className="services-page__feature-check" />
                           <EditableText value={f} tag="span" onSave={(val) => handleFeatureListEdit(benefitsKey, benefits, i, val)} />
-                          {isAdmin && editMode && (
-                            <button className="services-page__feat-delete" onClick={() => handleFeatureListDelete(benefitsKey, benefits, i)}><Trash2 size={12} /></button>
-                          )}
+                          {isAdmin && editMode && (<button className="services-page__feat-delete" onClick={() => handleFeatureListDelete(benefitsKey, benefits, i)}><Trash2 size={12} /></button>)}
                         </li>
                       ))}
                     </ul>
-                    {isAdmin && editMode && (
-                      <button className="services-page__feat-add" onClick={() => handleFeatureListAdd(benefitsKey, benefits)}>
-                        <Plus size={14} /> Добавить пункт
-                      </button>
-                    )}
+                    {isAdmin && editMode && (<button className="services-page__feat-add" onClick={() => handleFeatureListAdd(benefitsKey, benefits)}><Plus size={14} /> Добавить пункт</button>)}
                   </div>
                   <div className="services-page__security-col">
                     <EditableText value={functionsTitle} tag="h3" className="services-page__security-heading" onSave={s(`serviceData.${activeService}.functionsTitle`)} />
@@ -488,17 +385,11 @@ function ServicesPage({ type = 'personal' }) {
                         <li key={`${functionsKey}-${i}-${f}`} className="services-page__feature-item">
                           <Check size={16} className="services-page__feature-check" />
                           <EditableText value={f} tag="span" onSave={(val) => handleFeatureListEdit(functionsKey, functions, i, val)} />
-                          {isAdmin && editMode && (
-                            <button className="services-page__feat-delete" onClick={() => handleFeatureListDelete(functionsKey, functions, i)}><Trash2 size={12} /></button>
-                          )}
+                          {isAdmin && editMode && (<button className="services-page__feat-delete" onClick={() => handleFeatureListDelete(functionsKey, functions, i)}><Trash2 size={12} /></button>)}
                         </li>
                       ))}
                     </ul>
-                    {isAdmin && editMode && (
-                      <button className="services-page__feat-add" onClick={() => handleFeatureListAdd(functionsKey, functions)}>
-                        <Plus size={14} /> Добавить пункт
-                      </button>
-                    )}
+                    {isAdmin && editMode && (<button className="services-page__feat-add" onClick={() => handleFeatureListAdd(functionsKey, functions)}><Plus size={14} /> Добавить пункт</button>)}
                   </div>
                 </div>
               ) : (
@@ -508,57 +399,31 @@ function ServicesPage({ type = 'personal' }) {
                       <li key={`${featuresKey}-${i}-${f}`} className="services-page__feature-item">
                         <Check size={16} className="services-page__feature-check" />
                         <EditableText value={f} tag="span" onSave={(val) => handleFeatureListEdit(featuresKey, currentFeatures, i, val)} />
-                        {isAdmin && editMode && (
-                          <button className="services-page__feat-delete" onClick={() => handleFeatureListDelete(featuresKey, currentFeatures, i)}><Trash2 size={12} /></button>
-                        )}
+                        {isAdmin && editMode && (<button className="services-page__feat-delete" onClick={() => handleFeatureListDelete(featuresKey, currentFeatures, i)}><Trash2 size={12} /></button>)}
                       </li>
                     ))}
                   </ul>
-                  {isAdmin && editMode && (
-                    <button className="services-page__feat-add" onClick={() => handleFeatureListAdd(featuresKey, currentFeatures)}>
-                      <Plus size={14} /> Добавить пункт
-                    </button>
-                  )}
+                  {isAdmin && editMode && (<button className="services-page__feat-add" onClick={() => handleFeatureListAdd(featuresKey, currentFeatures)}><Plus size={14} /> Добавить пункт</button>)}
                 </>
               )}
 
               {contentBlocks.map((block, i) => (
                 <div key={`block-${i}`} className="services-page__content-block">
-                  {isAdmin && editMode && (
-                    <button className="services-page__block-delete" onClick={() => handleDeleteContentBlock(i)}>
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-
+                  {isAdmin && editMode && (<button className="services-page__block-delete" onClick={() => handleDeleteContentBlock(i)}><Trash2 size={14} /></button>)}
                   {block.type === 'image' && (
                     <div className="services-page__content-image-wrap">
                       {block.src ? (
-                        <EditableImage src={block.src} className="services-page__content-img"
-                          onSave={(url, file) => { if (file) handleContentImageUpload(i, file); }}
-                        />
+                        <EditableImage src={block.src} className="services-page__content-img" onSave={(url, file) => { if (file) handleContentImageUpload(i, file); }} />
                       ) : (
                         isAdmin && editMode ? (
-                          <div className="services-page__upload-placeholder" onClick={() => {
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = 'image/*';
-                            input.onchange = (e) => {
-                              if (e.target.files[0]) handleContentImageUpload(i, e.target.files[0]);
-                            };
-                            input.click();
-                          }}>
-                            <Plus size={32} />
-                            <span>Загрузить картинку</span>
+                          <div className="services-page__upload-placeholder" onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = (e) => { if (e.target.files[0]) handleContentImageUpload(i, e.target.files[0]); }; input.click(); }}>
+                            <Plus size={32} /><span>Загрузить картинку</span>
                           </div>
                         ) : null
                       )}
                     </div>
                   )}
-
-                  {block.type === 'text' && (
-                    <EditableText value={block.text} tag="p" className="services-page__content-text" onSave={(val) => handleEditContentBlock(i, 'text', val)} />
-                  )}
-
+                  {block.type === 'text' && (<EditableText value={block.text} tag="p" className="services-page__content-text" onSave={(val) => handleEditContentBlock(i, 'text', val)} />)}
                   {block.type === 'section' && (
                     <div className="services-page__content-section">
                       <EditableText value={block.title} tag="h3" className="services-page__detail-title" onSave={(val) => handleEditContentBlock(i, 'title', val)} />
@@ -568,17 +433,11 @@ function ServicesPage({ type = 'personal' }) {
                           <li key={`block-${i}-feat-${fi}-${f}`} className="services-page__feature-item">
                             <Check size={16} className="services-page__feature-check" />
                             <EditableText value={f} tag="span" onSave={(val) => handleContentBlockFeatureEdit(i, fi, val)} />
-                            {isAdmin && editMode && (
-                              <button className="services-page__feat-delete" onClick={() => handleContentBlockFeatureDelete(i, fi)}><Trash2 size={12} /></button>
-                            )}
+                            {isAdmin && editMode && (<button className="services-page__feat-delete" onClick={() => handleContentBlockFeatureDelete(i, fi)}><Trash2 size={12} /></button>)}
                           </li>
                         ))}
                       </ul>
-                      {isAdmin && editMode && (
-                        <button className="services-page__feat-add" onClick={() => handleContentBlockFeatureAdd(i)}>
-                          <Plus size={14} /> Добавить пункт
-                        </button>
-                      )}
+                      {isAdmin && editMode && (<button className="services-page__feat-add" onClick={() => handleContentBlockFeatureAdd(i)}><Plus size={14} /> Добавить пункт</button>)}
                     </div>
                   )}
                 </div>
@@ -586,21 +445,16 @@ function ServicesPage({ type = 'personal' }) {
 
               {isAdmin && editMode && (
                 <div className="services-page__add-blocks">
-                  <button className="services-page__feat-add" onClick={() => handleAddContentBlock('section')}>
-                    <Plus size={14} /> Добавить секцию
-                  </button>
-                  <button className="services-page__feat-add" onClick={() => handleAddContentBlock('text')}>
-                    <Plus size={14} /> Добавить текст
-                  </button>
-                  <button className="services-page__feat-add" onClick={() => handleAddContentBlock('image')}>
-                    <Plus size={14} /> Добавить картинку
-                  </button>
+                  <button className="services-page__feat-add" onClick={() => handleAddContentBlock('section')}><Plus size={14} /> Добавить секцию</button>
+                  <button className="services-page__feat-add" onClick={() => handleAddContentBlock('text')}><Plus size={14} /> Добавить текст</button>
+                  <button className="services-page__feat-add" onClick={() => handleAddContentBlock('image')}><Plus size={14} /> Добавить картинку</button>
                 </div>
               )}
             </div>
           </div>
 
-	  {activeService === 'security' && (
+          {/* ====== SECURITY CTA (after detail) ====== */}
+          {activeService === 'security' && (
             <div className="services-page__custom-cta" id="plans">
               <EditableText value={typeof securityCta === 'string' ? securityCta : ''} tag="p" onSave={s(`serviceData.${activeService}.cta`)} />
               <a href="/contact" className="btn btn-primary">{t('services.requestQuote')}</a>
