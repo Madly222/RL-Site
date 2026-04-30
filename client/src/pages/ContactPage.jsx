@@ -5,6 +5,8 @@ import { api } from '../api.js';
 import { useLang } from '../LangContext.jsx';
 import { EditableText } from '../components/Editable.jsx';
 import { EditableIcon, getIcon } from '../components/IconPicker.jsx';
+import EditableBackground from '../components/EditableBackground.jsx';
+import { authFetch } from '../api.js';
 import './ContactPage.css';
 
 function ContactPage() {
@@ -15,13 +17,11 @@ function ContactPage() {
   const [status, setStatus] = useState(null);
   const [responseMsg, setResponseMsg] = useState('');
 
-  // Icon state with defaults
   const [contactIcons, setContactIcons] = useState({
     phone: 'phone', email: 'mail', address: 'mappin', hours: 'clock'
   });
 
   useEffect(() => {
-    // Load saved icons
     fetch('/api/translations/icons').then(r => r.json()).then(data => {
       if (data.contactPhone) setContactIcons(prev => ({ ...prev, phone: data.contactPhone }));
       if (data.contactEmail) setContactIcons(prev => ({ ...prev, email: data.contactEmail }));
@@ -32,7 +32,7 @@ function ContactPage() {
 
   const saveIcon = (key, iconName) => {
     setContactIcons(prev => ({ ...prev, [key]: iconName }));
-    fetch('/api/translations', {
+    authFetch('/api/translations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang: 'icons', key: `contact${key.charAt(0).toUpperCase() + key.slice(1)}`, value: iconName })
@@ -43,9 +43,7 @@ function ContactPage() {
     const planName = searchParams.get('plan');
     const price = searchParams.get('price');
     if (planName && price) {
-      const msg = t('contact.planMessage')
-        .replace('{plan}', planName)
-        .replace('{price}', Number(price).toLocaleString());
+      const msg = t('contact.planMessage').replace('{plan}', planName).replace('{price}', Number(price).toLocaleString());
       setForm(prev => ({ ...prev, message: msg }));
       setTimeout(() => {
         const el = document.getElementById('contact-form');
@@ -54,27 +52,16 @@ function ContactPage() {
     }
   }, [searchParams, t]);
 
-  const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('loading');
     try {
       const data = await api.sendContact(form);
-      if (data.success) {
-        setStatus('success');
-        setResponseMsg(t('contact.success'));
-        setForm({ name: '', email: '', phone: '', message: '' });
-      } else {
-        setStatus('error');
-        setResponseMsg(data.error || t('contact.error'));
-      }
-    } catch (err) {
-      setStatus('error');
-      setResponseMsg(t('contact.error'));
-    }
+      if (data.success) { setStatus('success'); setResponseMsg(t('contact.success')); setForm({ name: '', email: '', phone: '', message: '' }); }
+      else { setStatus('error'); setResponseMsg(data.error || t('contact.error')); }
+    } catch { setStatus('error'); setResponseMsg(t('contact.error')); }
     setTimeout(() => setStatus(null), 5000);
   };
 
@@ -90,19 +77,19 @@ function ContactPage() {
 
   return (
     <div className="contact-page">
-      <section className="contact-page__hero">
+      <EditableBackground storageKey="contact.hero" tag="section" className="contact-page__hero">
         <div className="contact-page__glow" />
         <div className="container">
           <EditableText value={t('contact.label')} tag="div" className="section-label" onSave={s('contact.label')} />
           <EditableText value={t('contact.title')} tag="h1" className="section-title" onSave={s('contact.title')} />
           <EditableText value={t('contact.subtitle')} tag="p" className="section-subtitle" onSave={s('contact.subtitle')} />
         </div>
-      </section>
+      </EditableBackground>
 
       <section className="section">
         <div className="container">
           <div className="contact-page__grid">
-            <div className="contact-page__form-wrap" id="contact-form">
+            <EditableBackground storageKey="contact.form" className="contact-page__form-wrap" id="contact-form">
               <EditableText value={t('contact.formTitle')} tag="h2" className="contact-page__form-title" onSave={s('contact.formTitle')} />
               <form className="contact-page__form" onSubmit={handleSubmit}>
                 <div className="contact-page__field">
@@ -126,20 +113,12 @@ function ContactPage() {
                 <button type="submit" className="btn btn-primary contact-page__submit" disabled={status === 'loading'}>
                   {status === 'loading' ? t('contact.sending') : <>{t('contact.send')} <Send size={16} /></>}
                 </button>
-                {status === 'success' && (
-                  <div className="contact-page__alert contact-page__alert--success">
-                    <CheckCircle size={18} />{responseMsg}
-                  </div>
-                )}
-                {status === 'error' && (
-                  <div className="contact-page__alert contact-page__alert--error">
-                    <AlertCircle size={18} />{responseMsg}
-                  </div>
-                )}
+                {status === 'success' && (<div className="contact-page__alert contact-page__alert--success"><CheckCircle size={18} />{responseMsg}</div>)}
+                {status === 'error' && (<div className="contact-page__alert contact-page__alert--error"><AlertCircle size={18} />{responseMsg}</div>)}
               </form>
-            </div>
+            </EditableBackground>
 
-            <div className="contact-page__info">
+            <EditableBackground storageKey="contact.info" className="contact-page__info">
               <EditableText value={t('contact.infoTitle')} tag="h2" className="contact-page__info-title" onSave={s('contact.infoTitle')} />
               <div className="contact-page__info-list">
                 {contactInfo.map((item, i) => {
@@ -162,16 +141,12 @@ function ContactPage() {
               <div className="contact-page__map">
                 <iframe
                   src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d404.52994554323186!2d28.822181469868184!3d46.99425247538087!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40c97e943f06c4bd%3A0xcd2db996570b84fc!2sS.C.%20Rapid%20Link!5e0!3m2!1sru!2sus!4v1771601468203!5m2!1sru!2sus"
-                  width="100%"
-                  height="280"
+                  width="100%" height="280"
                   style={{ border: 0, borderRadius: 'var(--radius)' }}
-                  allowFullScreen=""
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="RapidLink Office"
+                  allowFullScreen="" loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="RapidLink Office"
                 />
               </div>
-            </div>
+            </EditableBackground>
           </div>
         </div>
       </section>

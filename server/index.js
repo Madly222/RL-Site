@@ -1,3 +1,12 @@
+// ============================================
+// Passenger (cPanel) support
+// ============================================
+if (typeof(PhusionPassenger) !== 'undefined') {
+  PhusionPassenger.configure({ autoInstall: false });
+}
+process.env.NODE_ENV = process.env.NODE_ENV || 'production';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'Kj8m2xPq9vNzR4wL7sFh3bYt6cUa0dEi';
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -24,7 +33,7 @@ app.use(express.json({ limit: '10mb' }));
 // ============================================
 // JWT Helper (simple, no external dependency)
 // ============================================
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
+const JWT_SECRET = process.env.JWT_SECRET || 'Kj8m2xPq9vNzR4wL7sFh3bYt6cUa0dEi';
 const JWT_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 
 function createToken(payload) {
@@ -68,14 +77,12 @@ function getAdminCredentials() {
       return JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'));
     }
   } catch {}
-  // First run: create default admin (username: admin, password: admin)
-  // CHANGE THIS immediately after first login!
   const defaultAdmin = {
-    username: 'admin',
-    password: hashPassword('admin')
+    username: 'rladmin',
+    password: hashPassword('admin1')
   };
   fs.writeFileSync(ADMIN_FILE, JSON.stringify(defaultAdmin, null, 2), 'utf8');
-  console.log('⚠️  Default admin created (admin/admin). Change password immediately!');
+  console.log('⚠️  Default admin created (rladmin/admin1). Change password immediately!');
   return defaultAdmin;
 }
 
@@ -118,7 +125,6 @@ function rateLimit(windowMs, maxRequests, keyFn) {
   };
 }
 
-// Clean up rate limit map every 10 minutes
 setInterval(() => {
   const now = Date.now();
   for (const [key, timestamps] of rateLimitMap) {
@@ -165,7 +171,6 @@ app.get('/api/services', (req, res) => {
 // Auth Routes
 // ============================================
 
-// Login — rate limited: 5 attempts per 15 minutes per IP
 app.post('/api/auth/login', rateLimit(15 * 60 * 1000, 5), (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
@@ -179,12 +184,10 @@ app.post('/api/auth/login', rateLimit(15 * 60 * 1000, 5), (req, res) => {
   res.json({ success: true, token });
 });
 
-// Verify token
 app.get('/api/auth/verify', requireAuth, (req, res) => {
   res.json({ valid: true, username: req.admin.username });
 });
 
-// Change password (requires current token)
 app.post('/api/auth/change-password', requireAuth, (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {
@@ -235,7 +238,6 @@ app.get('/api/service-tabs/:type', (req, res) => {
   res.json(tabs[req.params.type] || []);
 });
 
-// Protected: save tabs
 app.post('/api/service-tabs/:type', requireAuth, (req, res) => {
   const tabs = loadTabs();
   tabs[req.params.type] = req.body.tabs;
@@ -246,7 +248,6 @@ app.post('/api/service-tabs/:type', requireAuth, (req, res) => {
 // ============================================
 // Plans (public: read, protected: write)
 // ============================================
-const PLANS_FILE = path.join(__dirname, 'data', 'plans.js');
 const PLANS_JSON = path.join(__dirname, 'data', 'plans.json');
 
 function loadPlans() {
@@ -306,7 +307,6 @@ const transporter = nodemailer.createTransport({
   tls: { rejectUnauthorized: false }
 });
 
-// 3 submissions per 15 minutes per IP
 app.post('/api/contact', rateLimit(15 * 60 * 1000, 3), async (req, res) => {
   const name = sanitize(req.body.name);
   const email = sanitize(req.body.email);
@@ -317,12 +317,10 @@ app.post('/api/contact', rateLimit(15 * 60 * 1000, 3), async (req, res) => {
     return res.status(400).json({ error: 'Все поля обязательны для заполнения' });
   }
 
-  // Basic email validation
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.email)) {
     return res.status(400).json({ error: 'Некорректный email' });
   }
 
-  // Message length limits
   if (name.length > 100 || email.length > 200 || phone.length > 30 || message.length > 5000) {
     return res.status(400).json({ error: 'Превышена допустимая длина полей' });
   }
@@ -388,23 +386,24 @@ app.post('/api/contact', rateLimit(15 * 60 * 1000, 3), async (req, res) => {
 // Image upload (protected)
 // ============================================
 const multer = require('multer');
-const IMAGES_DIR = path.join(__dirname, '../client/public/images');
+const IMAGES_DIR = process.env.NODE_ENV === 'production'
+  ? path.join(__dirname, '../client/build/images')
+  : path.join(__dirname, '../client/public/images');
 
 if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
 
-const storage = multer.diskStorage({
+const imageStorage = multer.diskStorage({
   destination: IMAGES_DIR,
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     const name = req.body.name || ('img-' + Date.now());
-    // Sanitize filename
     const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '_');
     cb(null, safeName + ext);
   }
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const uploadImage = multer({ storage: imageStorage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
+app.post('/api/upload', requireAuth, uploadImage.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   res.json({ url: '/images/' + req.file.filename });
 });
@@ -448,6 +447,8 @@ app.post('/api/translations', requireAuth, (req, res) => {
 // Documents
 // ============================================
 const DOCS_DIR = path.join(__dirname, 'documents');
+
+if (!fs.existsSync(DOCS_DIR)) fs.mkdirSync(DOCS_DIR, { recursive: true });
 
 app.use('/api/documents/files', express.static(DOCS_DIR));
 
@@ -504,6 +505,51 @@ app.get('/api/documents/:category', (req, res) => {
   }
 });
 
+// Documents upload (protected)
+const pdfStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const safeCategory = req.params.category.replace(/[^a-zA-Z0-9_-]/g, '');
+    const dir = path.join(DOCS_DIR, safeCategory);
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const uploadPdf = multer({
+  storage: pdfStorage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') cb(null, true);
+    else cb(new Error('Only PDF files are allowed'));
+  }
+});
+
+app.post('/api/documents/:category/upload', requireAuth, uploadPdf.array('files'), (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: 'Нет файлов' });
+  }
+  console.log(`📄 Загружено ${req.files.length} PDF в категорию "${req.params.category}"`);
+  res.json({ success: true, uploaded: req.files.length });
+});
+
+app.delete('/api/documents/:category/:filename', requireAuth, (req, res) => {
+  const safeCategory = req.params.category.replace(/[^a-zA-Z0-9_-]/g, '');
+  const safeFilename = path.basename(req.params.filename); // защита от path traversal
+  const filePath = path.join(DOCS_DIR, safeCategory, safeFilename);
+  if (!filePath.startsWith(DOCS_DIR)) {
+    return res.status(400).json({ error: 'Недопустимый путь' });
+  }
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Файл не найден' });
+  }
+  fs.unlinkSync(filePath);
+  console.log(`🗑️  Удалён документ: ${safeCategory}/${safeFilename}`);
+  res.json({ success: true });
+});
+
 // ============================================
 // Content
 // ============================================
@@ -529,6 +575,82 @@ app.post('/api/content', requireAuth, (req, res) => {
 });
 
 // ============================================
+// Cleanup unused images
+// ============================================
+app.post('/api/cleanup-images', requireAuth, (req, res) => {
+  try {
+    const allFiles = fs.readdirSync(IMAGES_DIR).filter(f =>
+      /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(f)
+    );
+    const referenced = new Set();
+    referenced.add('logo.png');
+
+    const transFiles = fs.readdirSync(TRANSLATIONS_DIR).filter(f => f.startsWith('translations-') && f.endsWith('.json'));
+    transFiles.forEach(tf => {
+      try {
+        const raw = fs.readFileSync(path.join(TRANSLATIONS_DIR, tf), 'utf8');
+        const allMatches = raw.match(/images\/[^"'\s\\,\]]+\.[a-z]{3,4}/gi) || [];
+        allMatches.forEach(m => {
+          const filename = m.replace(/^images\//, '');
+          if (filename) referenced.add(filename);
+        });
+      } catch {}
+    });
+
+    try {
+      const plansData = JSON.stringify(loadPlans());
+      const matches = plansData.match(/images\/[^"'\s\\,\]]+\.[a-z]{3,4}/gi) || [];
+      matches.forEach(m => {
+        const filename = m.replace(/^images\//, '');
+        if (filename) referenced.add(filename);
+      });
+    } catch {}
+
+    try {
+      if (fs.existsSync(CONTENT_FILE)) {
+        const content = fs.readFileSync(CONTENT_FILE, 'utf8');
+        const matches = content.match(/images\/[^"'\s\\,\]]+\.[a-z]{3,4}/gi) || [];
+        matches.forEach(m => {
+          const filename = m.replace(/^images\//, '');
+          if (filename) referenced.add(filename);
+        });
+      }
+    } catch {}
+
+    try {
+      if (fs.existsSync(TABS_FILE)) {
+        const content = fs.readFileSync(TABS_FILE, 'utf8');
+        const matches = content.match(/images\/[^"'\s\\,\]]+\.[a-z]{3,4}/gi) || [];
+        matches.forEach(m => {
+          const filename = m.replace(/^images\//, '');
+          if (filename) referenced.add(filename);
+        });
+      }
+    } catch {}
+
+    let deleted = 0;
+    let freedBytes = 0;
+    allFiles.forEach(f => {
+      if (!referenced.has(f)) {
+        try {
+          const stats = fs.statSync(path.join(IMAGES_DIR, f));
+          freedBytes += stats.size;
+          fs.unlinkSync(path.join(IMAGES_DIR, f));
+          deleted++;
+        } catch {}
+      }
+    });
+
+    const freedMB = (freedBytes / (1024 * 1024)).toFixed(2);
+    console.log(`🧹 Cleanup: deleted ${deleted} files, freed ${freedMB} MB`);
+    console.log(`🧹 Referenced files: ${[...referenced].join(', ')}`);
+    res.json({ success: true, deleted, freedMB });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
 // Production static
 // ============================================
 if (process.env.NODE_ENV === 'production') {
@@ -541,10 +663,16 @@ if (process.env.NODE_ENV === 'production') {
 // ============================================
 // Start
 // ============================================
-app.listen(PORT, () => {
-  console.log(`
+if (typeof(PhusionPassenger) !== 'undefined') {
+  app.listen('passenger', () => {
+    console.log('RapidLink Server started via Passenger');
+  });
+} else {
+  app.listen(PORT, () => {
+    console.log(`
   ⚡ RapidLink Server запущен
   📡 Порт: ${PORT}
   🌍 API: http://localhost:${PORT}/api
-  `);
-});
+    `);
+  });
+}

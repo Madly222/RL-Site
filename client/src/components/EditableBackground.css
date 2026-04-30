@@ -1,0 +1,113 @@
+/* ============================================
+   EditableBackground
+   ============================================ */
+
+.editable-bg {
+  position: relative;
+}
+
+/* Фоновая картинка как абсолютный img */
+.editable-bg__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Оверлей поверх картинки */
+.editable-bg__overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Контент поверх всего */
+.editable-bg__content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Когда есть фон — текст белый */
+.editable-bg--has-image .editable-bg__content,
+.editable-bg--has-image .editable-bg__content h1,
+.editable-bg--has-image .editable-bg__content h2,
+.editable-bg--has-image .editable-bg__content h3,
+.editable-bg--has-image .editable-bg__content h4,
+.editable-bg--has-image .editable-bg__content p,
+.editable-bg--has-image .editable-bg__content span,
+.editable-bg--has-image .editable-bg__content li,
+.editable-bg--has-image .editable-bg__content a {
+  color: #fff !important;
+}
+
+.editable-bg--has-image .editable-bg__content .services-page__feature-check,
+.editable-bg--has-image .editable-bg__content .section-label,
+.editable-bg--has-image .editable-bg__content .plan-card__check {
+  color: var(--accent, #ff0000) !important;
+}
+
+/* Скрываем стандартный background когда есть картинка */
+.editable-bg--has-image {
+  overflow: hidden;
+}
+
+/* ============================================
+   Кнопки управления фоном
+   ============================================ */
+
+.editable-bg__controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.editable-bg:hover .editable-bg__controls {
+  opacity: 1;
+}
+
+.editable-bg__btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.editable-bg__btn:hover {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.editable-bg__btn:disabled { opacity: 0.5; cursor: wait; }
+
+.editable-bg__btn--remove {
+  padding: 5px 7px;
+  border-color: rgba(255, 80, 80, 0.5);
+  color: #ff6666;
+}
+
+.editable-bg__btn--remove:hover {
+  background: rgba(255, 50, 50, 0.8);
+  color: #fff;
+  border-color: transparent;
+}

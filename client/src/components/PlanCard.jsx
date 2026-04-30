@@ -1,9 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, X, Trash2, Plus } from 'lucide-react';
+import { Check, X, Trash2, Plus, Image } from 'lucide-react';
 import { useLang } from '../LangContext.jsx';
 import { useAdmin } from '../AdminContext.jsx';
 import { EditableText, EditableImage } from './Editable.jsx';
+import { authFetch } from '../api.js';
 import './PlanCard.css';
 
 function PlanCard({ plan, delay = 0, onDelete, onUpdate }) {
@@ -20,11 +21,7 @@ function PlanCard({ plan, delay = 0, onDelete, onUpdate }) {
 
   const handleSelect = () => {
     if (isAdmin && editMode) return;
-    const params = new URLSearchParams({
-      plan: plan.name,
-      price: plan.price,
-      lang: lang
-    });
+    const params = new URLSearchParams({ plan: plan.name, price: plan.price, lang });
     navigate(`/contact?${params.toString()}`);
   };
 
@@ -64,6 +61,7 @@ function PlanCard({ plan, delay = 0, onDelete, onUpdate }) {
     onUpdate?.(plan.id, 'addFeature', '');
   };
 
+  // Upload фото роутера (сбоку)
   const handleImageUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -75,7 +73,7 @@ function PlanCard({ plan, delay = 0, onDelete, onUpdate }) {
       formData.append('image', file);
       formData.append('name', `plan-${plan.id}`);
       try {
-        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const res = await authFetch('/api/upload', { method: 'POST', body: formData });
         const data = await res.json();
         if (data.url) onUpdate?.(plan.id, 'image', data.url);
       } catch {}
@@ -83,14 +81,62 @@ function PlanCard({ plan, delay = 0, onDelete, onUpdate }) {
     input.click();
   };
 
+  // Upload фоновой картинки
+  const handleBgUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('name', `plan-bg-${plan.id}`);
+      try {
+        const res = await authFetch('/api/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.url) onUpdate?.(plan.id, 'bgImage', data.url);
+      } catch {}
+    };
+    input.click();
+  };
+
   const hasImage = !!plan.image;
+  const hasBg = !!plan.bgImage;
+
+  const cardStyle = {
+    animationDelay: `${delay}s`,
+    ...(hasBg ? {
+      backgroundImage: `url(${plan.bgImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    } : {})
+  };
 
   return (
-    <div className={`plan-card ${hasImage ? 'plan-card--with-image' : ''}`} style={{ animationDelay: `${delay}s` }}>
+    <div
+      className={`plan-card${hasImage ? ' plan-card--with-image' : ''}${hasBg ? ' plan-card--with-bg' : ''}`}
+      style={cardStyle}
+    >
+      {/* Overlay поверх фона чтобы контент читался */}
+      {hasBg && <div className="plan-card__bg-overlay" />}
+
       {isAdmin && editMode && (
-        <button className="plan-card__delete" onClick={() => onDelete?.(plan.id)} title="Удалить план">
-          <Trash2 size={14} />
-        </button>
+        <div className="plan-card__admin-btns">
+          <button className="plan-card__delete" onClick={() => onDelete?.(plan.id)} title="Удалить план">
+            <Trash2 size={14} />
+          </button>
+          {hasBg ? (
+            <button className="plan-card__bg-btn plan-card__bg-btn--delete" onClick={() => onUpdate?.(plan.id, 'bgImage', '')} title="Удалить фон">
+              <Trash2 size={12} /> <span>Фон</span>
+            </button>
+          ) : (
+            <button className="plan-card__bg-btn plan-card__bg-btn--add" onClick={handleBgUpload} title="Добавить фон">
+              <Image size={12} /> <span>Фон</span>
+            </button>
+          )}
+        </div>
       )}
 
       <div className="plan-card__body">
@@ -116,8 +162,7 @@ function PlanCard({ plan, delay = 0, onDelete, onUpdate }) {
                   >
                     {feature.included
                       ? <Check size={16} className="plan-card__check" />
-                      : <X size={16} className="plan-card__x" />
-                    }
+                      : <X size={16} className="plan-card__x" />}
                   </button>
                 ) : (
                   feature.included
@@ -126,11 +171,7 @@ function PlanCard({ plan, delay = 0, onDelete, onUpdate }) {
                 )}
                 <EditableText value={getFeatureText(feature, i)} tag="span" onSave={(val) => handleFeatureSave(i, val)} />
                 {isAdmin && editMode && (
-                  <button
-                    className="plan-card__delete-feature"
-                    onClick={() => handleFeatureDelete(i)}
-                    title="Удалить пункт"
-                  >
+                  <button className="plan-card__delete-feature" onClick={() => handleFeatureDelete(i)} title="Удалить пункт">
                     <Trash2 size={12} />
                   </button>
                 )}
@@ -144,7 +185,7 @@ function PlanCard({ plan, delay = 0, onDelete, onUpdate }) {
           )}
         </div>
 
-        {/* Image area — right side */}
+        {/* Фото роутера — сбоку, как было */}
         {(hasImage || (isAdmin && editMode)) && (
           <div className="plan-card__image-area">
             {hasImage ? (

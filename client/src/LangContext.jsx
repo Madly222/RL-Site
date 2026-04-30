@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { authFetch } from './api.js';
 import { ro } from './locales/ro.js';
 import { ru } from './locales/ru.js';
 
@@ -35,7 +36,6 @@ export function LangProvider({ children }) {
     return val !== undefined ? val : key;
   }, [lang, overrides]);
 
-  // Get translation for a specific language (not just current)
   const tLang = useCallback((targetLang, key) => {
     if (overrides[targetLang] && overrides[targetLang][key] !== undefined) {
       return overrides[targetLang][key];
@@ -45,26 +45,24 @@ export function LangProvider({ children }) {
     return val !== undefined ? val : null;
   }, [overrides]);
 
-  // Save translation for current language
   const setTranslation = useCallback((key, value) => {
     setOverrides(prev => ({
       ...prev,
       [lang]: { ...prev[lang], [key]: value }
     }));
-    fetch('/api/translations', {
+    authFetch('/api/translations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang, key, value })
     }).catch(() => {});
   }, [lang]);
 
-  // Save translation for a specific language
   const setTranslationForLang = useCallback((targetLang, key, value) => {
     setOverrides(prev => ({
       ...prev,
       [targetLang]: { ...prev[targetLang], [key]: value }
     }));
-    fetch('/api/translations', {
+    authFetch('/api/translations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang: targetLang, key, value })

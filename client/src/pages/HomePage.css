@@ -108,7 +108,7 @@
    ======================================== */
 .hero-window {
   position: relative;
-  width: 480px;
+  width: 560px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -402,8 +402,8 @@
 
 .services-preview__card.card:hover {
   background: linear-gradient(135deg, var(--bg-card) 0%, var(--accent-subtle) 100%);
-  border-color: rgba(255, 0, 0, 0.2);
-  box-shadow: 0 8px 32px var(--accent-glow);
+  border-color: rgba(255, 0, 0, 0.3);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.7), 0 0 60px rgba(255, 0, 0, 0.3);
   transform: translateY(-4px);
 }
 
@@ -545,10 +545,10 @@
 }
 
 .features__item:hover {
-  border-color: rgba(255, 0, 0, 0.2);
+  border-color: rgba(255, 0, 0, 0.3);
   transform: translateY(-4px);
   background: linear-gradient(135deg, var(--bg-card) 0%, var(--accent-subtle) 100%);
-  box-shadow: 0 8px 32px var(--accent-glow);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.7), 0 0 60px rgba(255, 0, 0, 0.4);
 }
 
 .features__icon-wrap {

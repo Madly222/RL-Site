@@ -3,18 +3,19 @@ import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useLang } from '../LangContext.jsx';
 import { EditableText } from './Editable.jsx';
+import EditableBackground from './EditableBackground.jsx';
 import './Footer.css';
 
 function Footer() {
   const { t, setTranslation } = useLang();
   const s = (key) => (val) => setTranslation(key, val);
+
   return (
-    <footer className="footer">
+    <EditableBackground storageKey="footer" tag="footer" className="footer">
       <div className="container">
         <div className="footer__grid">
           <div className="footer__brand">
             <Link to="/" className="footer__logo">
-              
               <span>Rapid<span style={{ color: 'var(--accent)' }}> Link</span></span>
             </Link>
             <p className="footer__slogan">The best connection ever</p>
@@ -48,7 +49,7 @@ function Footer() {
           </div>
         </div>
       </div>
-    </footer>
+    </EditableBackground>
   );
 }
 

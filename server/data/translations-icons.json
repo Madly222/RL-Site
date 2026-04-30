@@ -1,8 +1,20 @@
 {
   "specialImg1": "/images/img-1772637142323.jpg",
   "specialImg2": "/images/img-1772628965849.jpg",
-  "sliderSpeed": "2500",
+  "sliderSpeed": "2000",
   "sliderCards": "[{\"id\":1},{\"id\":2},{\"id\":3}]",
   "specialImg3": "/images/img-1772628971959.jpg",
-  "headerLinks": "[{\"id\":1772624490818,\"icon\":\"/images/img-1772636295943.webp\",\"url\":\"https://www.instagram.com/rapidlink2020?igsh=aHNybzI2d2h0emFi&utm_source=qr\"},{\"id\":1772630994458,\"icon\":\"/images/img-1772636302047.webp\",\"url\":\"https://www.facebook.com/RapidLinkMD/?locale=ru_RU\"},{\"id\":1772631537899,\"icon\":\"/images/img-1772636318702.webp\",\"url\":\"https://t.me/rapidlink_bitrix_bot\"},{\"id\":1772692299650,\"icon\":\"/images/img-1772692299720.png\",\"url\":\"\"}]"
+  "headerLinks": "[{\"id\":1772624490818,\"icon\":\"/images/img-1772801336141.PNG\",\"url\":\"https://www.instagram.com/rapidlink2020?igsh=aHNybzI2d2h0emFi&utm_source=qr\"},{\"id\":1772630994458,\"icon\":\"/images/img-1772801342508.PNG\",\"url\":\"https://www.facebook.com/RapidLinkMD/?locale=ru_RU\"},{\"id\":1772631537899,\"icon\":\"/images/img-1772801347939.PNG\",\"url\":\"https://t.me/rapidlink_bitrix_bot\"},{\"id\":1772797307030,\"icon\":\"/images/img-1772801416835.png\",\"url\":\"https://eshop.rapidlink.md/\"}]",
+  "specialImg4": "/images/img-1772786683639.jpg",
+  "bannerBusiness": "/images/img-1773393515451.png",
+  "logoDark": "/images/img-1773042152663.png",
+  "logoLight": "/images/img-1772807372201.png",
+  "payMethods": "[{\"id\":\"oplata\",\"url\":\"https://oplata.md/rapidlink\",\"nameKey\":\"nav.pay_oplata_name\",\"descKey\":\"nav.pay_oplata_desc\",\"infoTitleKey\":\"nav.pay_oplata_info\",\"stepsKey\":\"nav.pay_oplata_steps\"},{\"id\":\"paynet\",\"url\":\"https://paynet.md/account/signup\",\"nameKey\":\"nav.pay_paynet_name\",\"descKey\":\"nav.pay_paynet_desc\",\"infoTitleKey\":\"nav.pay_paynet_info\",\"stepsKey\":\"nav.pay_paynet_steps\"}]",
+  "bannerPersonal": "/images/img-1773394133861.jpg",
+  "bg_home.svc-card.hosting": "/images/img-1773649325785.png",
+  "bg_home.svc-card.vps": "/images/img-1773649333329.jfif",
+  "bg_svc-tab.business.hosting": "/images/img-1773649897909.png",
+  "bg_svc-tab.personal.internet": "/images/img-1773649990607.png",
+  "bg_svc-tab.business.internet": "/images/img-1773650174746.jfif",
+  "bg_svc-tab.business.vps": "/images/img-1773650185417.jpg"
 }

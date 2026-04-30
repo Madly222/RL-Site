@@ -51,6 +51,10 @@
   opacity: 1;
 }
 
+.editable-img:hover .editable-img__hint {
+  opacity: 1;
+}
+
 .editable-img__btn {
   position: absolute;
   top: 50%;
@@ -74,4 +78,22 @@
 
 .editable-img__btn:hover {
   background: var(--accent);
+}
+
+.editable-img__hint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ccc;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
 }

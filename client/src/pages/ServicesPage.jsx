@@ -6,7 +6,9 @@ import { useLang } from '../LangContext.jsx';
 import { useAdmin } from '../AdminContext.jsx';
 import { EditableText, EditableImage } from '../components/Editable.jsx';
 import { EditableIcon, getIcon } from '../components/IconPicker.jsx';
+import EditableBackground from '../components/EditableBackground.jsx';
 import PlanCard from '../components/PlanCard.jsx';
+import { authFetch } from '../api.js';
 import './ServicesPage.css';
 
 function BannerImage({ type }) {
@@ -17,15 +19,27 @@ function BannerImage({ type }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    const newSrc = type === 'personal' ? '/images/banner-personal.png' : '/images/banner-business.png';
-    setSrc(newSrc);
-    setHasError(false);
     setChecked(false);
-    const img = new Image();
-    img.onload = () => { setChecked(true); setHasError(false); };
-    img.onerror = () => { setChecked(true); setHasError(true); };
-    img.src = newSrc;
+    setHasError(false);
+    fetch('/api/translations/icons').then(r => r.json()).then(data => {
+      const key = type === 'personal' ? 'bannerPersonal' : 'bannerBusiness';
+      const savedUrl = data[key];
+      const urlToCheck = savedUrl || defaultSrc;
+      const img = new Image();
+      img.onload = () => { setSrc(urlToCheck); setChecked(true); setHasError(false); };
+      img.onerror = () => { setChecked(true); setHasError(true); };
+      img.src = urlToCheck;
+    }).catch(() => { setChecked(true); setHasError(true); });
   }, [type]);
+
+  const saveBannerUrl = (url) => {
+    const key = type === 'personal' ? 'bannerPersonal' : 'bannerBusiness';
+    authFetch('/api/translations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: 'icons', key, value: url })
+    }).catch(() => {});
+  };
 
   const handleUpload = () => {
     const input = document.createElement('input');
@@ -38,22 +52,20 @@ function BannerImage({ type }) {
       formData.append('image', file);
       formData.append('name', type === 'personal' ? 'banner-personal' : 'banner-business');
       try {
-        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const res = await authFetch('/api/upload', { method: 'POST', body: formData });
         const data = await res.json();
-        if (data.url) { setSrc(data.url); setHasError(false); }
+        if (data.url) { setSrc(data.url); setHasError(false); saveBannerUrl(data.url); }
       } catch {}
     };
     input.click();
   };
 
   if (!checked) return null;
-
   if (hasError) {
     if (isAdmin && editMode) {
       return (
         <div className="services-page__banner-placeholder" onClick={handleUpload}>
-          <Plus size={32} />
-          <span>Загрузить баннер</span>
+          <Plus size={32} /><span>Загрузить баннер</span>
         </div>
       );
     }
@@ -62,10 +74,9 @@ function BannerImage({ type }) {
 
   return (
     <EditableImage
-      src={src}
-      className="services-page__banner-img"
+      src={src} className="services-page__banner-img"
       name={type === 'personal' ? 'banner-personal' : 'banner-business'}
-      onSave={(url) => { if (url) { setSrc(url); setHasError(false); } }}
+      onSave={(url) => { if (url) { setSrc(url); setHasError(false); saveBannerUrl(url); } }}
     />
   );
 }
@@ -106,7 +117,7 @@ function ServicesPage({ type = 'personal' }) {
 
   const saveTabs = (newTabs) => {
     setTabs(newTabs);
-    fetch(`/api/service-tabs/${type}`, {
+    authFetch(`/api/service-tabs/${type}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tabs: newTabs })
@@ -115,27 +126,20 @@ function ServicesPage({ type = 'personal' }) {
 
   const loadPlans = async (serviceId, planType) => {
     if (serviceId === 'security') { setPlans([]); return; }
-    try {
-      const data = await api.getPlans(serviceId, planType);
-      setPlans(data);
-    } catch (err) { setPlans([]); }
+    try { const data = await api.getPlans(serviceId, planType); setPlans(data); }
+    catch { setPlans([]); }
   };
 
-  const handleServiceClick = (id) => {
-    setActiveService(id);
-    loadPlans(id, type);
-  };
+  const handleServiceClick = (id) => { setActiveService(id); loadPlans(id, type); };
 
   const handleAddTab = () => {
     const newId = 'service-' + Date.now();
     const newTabs = [...tabs, { id: newId, icon: 'globe' }];
     saveTabs(newTabs);
-    const roName = 'Новая услуга';
-    const ruName = 'Новая услуга';
-    setTranslation(`categories.${newId}`, roName);
-    setTranslationForLang(otherLang, `categories.${newId}`, ruName);
-    setTranslation(`serviceData.${newId}.title`, roName);
-    setTranslationForLang(otherLang, `serviceData.${newId}.title`, ruName);
+    setTranslation(`categories.${newId}`, 'Новая услуга');
+    setTranslationForLang(otherLang, `categories.${newId}`, 'Новая услуга');
+    setTranslation(`serviceData.${newId}.title`, 'Новая услуга');
+    setTranslationForLang(otherLang, `serviceData.${newId}.title`, 'Новая услуга');
     setTranslation(`serviceData.${newId}.description`, 'Описание новой услуги');
     setTranslationForLang(otherLang, `serviceData.${newId}.description`, 'Описание новой услуги');
     setTranslation(`serviceData.${newId}.features`, ['Пункт 1', 'Пункт 2']);
@@ -147,61 +151,41 @@ function ServicesPage({ type = 'personal' }) {
     if (!confirm('Удалить эту услугу?')) return;
     const newTabs = tabs.filter(t => t.id !== id);
     saveTabs(newTabs);
-    if (activeService === id && newTabs.length > 0) {
-      setActiveService(newTabs[0].id);
-      loadPlans(newTabs[0].id, type);
-    }
+    if (activeService === id && newTabs.length > 0) { setActiveService(newTabs[0].id); loadPlans(newTabs[0].id, type); }
   };
 
   const handleTabIconChange = (tabId, iconName) => {
-    const newTabs = tabs.map(t => t.id === tabId ? { ...t, icon: iconName } : t);
-    saveTabs(newTabs);
+    saveTabs(tabs.map(t => t.id === tabId ? { ...t, icon: iconName } : t));
   };
 
   const handleUpdatePlan = async (planId, field, value) => {
     const plan = plans.find(p => p.id === planId);
     if (!plan) return;
     let update = {};
-    if (field === 'name') {
-      update.name = value;
-    } else if (field === 'price') {
-      update.price = value;
-    } else if (field === 'image') {
-      update.image = value;
-    } else if (field.startsWith('feature-') && !field.startsWith('feature-toggle') && !field.startsWith('feature-delete')) {
+    if (field === 'name') update.name = value;
+    else if (field === 'price') update.price = value;
+    else if (field === 'image') update.image = value;
+    else if (field === 'bgImage') update.bgImage = value;
+    else if (field.startsWith('feature-') && !field.startsWith('feature-toggle') && !field.startsWith('feature-delete')) {
       const idx = parseInt(field.split('-')[1]);
-      const newFeatures = [...plan.features];
-      newFeatures[idx] = { ...newFeatures[idx], text: value };
-      update.features = newFeatures;
+      const newFeatures = [...plan.features]; newFeatures[idx] = { ...newFeatures[idx], text: value }; update.features = newFeatures;
     } else if (field.startsWith('toggleFeature-')) {
       const idx = parseInt(field.split('-')[1]);
-      const newFeatures = [...plan.features];
-      newFeatures[idx] = { ...newFeatures[idx], included: value };
-      update.features = newFeatures;
+      const newFeatures = [...plan.features]; newFeatures[idx] = { ...newFeatures[idx], included: value }; update.features = newFeatures;
     } else if (field.startsWith('deleteFeature-')) {
       const idx = parseInt(field.split('-')[1]);
-      const newFeatures = plan.features.filter((_, i) => i !== idx);
-      update.features = newFeatures;
+      update.features = plan.features.filter((_, i) => i !== idx);
     } else if (field === 'addFeature') {
-      const newFeatures = [...plan.features, { text: 'Новый пункт', included: true }];
-      update.features = newFeatures;
+      update.features = [...plan.features, { text: 'Новый пункт', included: true }];
     }
-    try {
-      await api.updatePlan(planId, update);
-      loadPlans(activeService, type);
-    } catch (err) {
-      console.error('Failed to update plan:', err);
-    }
+    try { await api.updatePlan(planId, update); loadPlans(activeService, type); }
+    catch (err) { console.error('Failed to update plan:', err); }
   };
 
   const handleDeletePlan = async (planId) => {
     if (!confirm('Удалить этот план?')) return;
-    try {
-      await api.deletePlan(planId);
-      loadPlans(activeService, type);
-    } catch (err) {
-      console.error('Failed to delete plan:', err);
-    }
+    try { await api.deletePlan(planId); loadPlans(activeService, type); }
+    catch (err) { console.error('Failed to delete plan:', err); }
   };
 
   const handleAddPlan = async () => {
@@ -209,75 +193,27 @@ function ServicesPage({ type = 'personal' }) {
     const planKey = planName.toLowerCase();
     const features = ['Функция 1', 'Функция 2', 'Функция 3'];
     try {
-      await api.addPlan({
-        name: planName, price: 100, category: activeService, type: type,
-        features: [
-          { text: 'Функция 1', included: true },
-          { text: 'Функция 2', included: true },
-          { text: 'Функция 3', included: false }
-        ]
-      });
-      fetch('/api/translations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: 'ro', key: `planFeatures.${activeService}.${planKey}`, value: features }) });
-      fetch('/api/translations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: 'ru', key: `planFeatures.${activeService}.${planKey}`, value: features }) });
+      await api.addPlan({ name: planName, price: 100, category: activeService, type, features: [{ text: 'Функция 1', included: true }, { text: 'Функция 2', included: true }, { text: 'Функция 3', included: false }] });
+      authFetch('/api/translations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: 'ro', key: `planFeatures.${activeService}.${planKey}`, value: features }) });
+      authFetch('/api/translations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: 'ru', key: `planFeatures.${activeService}.${planKey}`, value: features }) });
       loadPlans(activeService, type);
-    } catch (err) {
-      console.error('Failed to add plan:', err);
-    }
+    } catch (err) { console.error('Failed to add plan:', err); }
   };
 
-  const handleFeatureListEdit = (tKey, items, i, val) => {
-    const newArr = [...items];
-    newArr[i] = val;
-    setTranslation(tKey, newArr);
-  };
-
-  const handleFeatureListDelete = (tKey, items, i) => {
-    const newArr = [...items];
-    newArr.splice(i, 1);
-    setTranslation(tKey, newArr);
-    const otherArr = tLang(otherLang, tKey);
-    if (Array.isArray(otherArr)) {
-      const copy = [...otherArr];
-      copy.splice(i, 1);
-      setTranslationForLang(otherLang, tKey, copy);
-    }
-  };
-
-  const handleFeatureListAdd = (tKey, items) => {
-    const newText = lang === 'ro' ? 'Punct nou' : 'Новый пункт';
-    const otherText = lang === 'ro' ? 'Новый пункт' : 'Punct nou';
-    const newArr = Array.isArray(items) ? [...items, newText] : [newText];
-    setTranslation(tKey, newArr);
-    const otherArr = tLang(otherLang, tKey);
-    const otherCopy = Array.isArray(otherArr) ? [...otherArr, otherText] : [otherText];
-    setTranslationForLang(otherLang, tKey, otherCopy);
-  };
+  const handleFeatureListEdit = (tKey, items, i, val) => { const newArr = [...items]; newArr[i] = val; setTranslation(tKey, newArr); };
+  const handleFeatureListDelete = (tKey, items, i) => { const newArr = [...items]; newArr.splice(i, 1); setTranslation(tKey, newArr); const otherArr = tLang(otherLang, tKey); if (Array.isArray(otherArr)) { const copy = [...otherArr]; copy.splice(i, 1); setTranslationForLang(otherLang, tKey, copy); } };
+  const handleFeatureListAdd = (tKey, items) => { const newText = lang === 'ro' ? 'Punct nou' : 'Новый пункт'; const otherText = lang === 'ro' ? 'Новый пункт' : 'Punct nou'; const newArr = Array.isArray(items) ? [...items, newText] : [newText]; setTranslation(tKey, newArr); const otherArr = tLang(otherLang, tKey); const otherCopy = Array.isArray(otherArr) ? [...otherArr, otherText] : [otherText]; setTranslationForLang(otherLang, tKey, otherCopy); };
 
   const contentBlocksRaw = t(`serviceData.${activeService}.contentBlocks`);
   const contentBlocks = Array.isArray(contentBlocksRaw) ? contentBlocksRaw : [];
 
-  const handleAddContentBlock = (blockType) => {
-    const tKey = `serviceData.${activeService}.contentBlocks`;
-    let newBlock, otherBlock;
-    if (blockType === 'image') { newBlock = { type: 'image', src: '' }; otherBlock = { type: 'image', src: '' }; }
-    else if (blockType === 'section') {
-      const title = lang === 'ro' ? 'Titlu nou' : 'Новый заголовок'; const desc = lang === 'ro' ? 'Descriere nouă' : 'Новое описание'; const features = lang === 'ro' ? ['Punct 1', 'Punct 2'] : ['Пункт 1', 'Пункт 2'];
-      const otherTitle = lang === 'ro' ? 'Новый заголовок' : 'Titlu nou'; const otherDesc = lang === 'ro' ? 'Новое описание' : 'Descriere nouă'; const otherFeatures = lang === 'ro' ? ['Пункт 1', 'Пункт 2'] : ['Punct 1', 'Punct 2'];
-      newBlock = { type: 'section', title, description: desc, features }; otherBlock = { type: 'section', title: otherTitle, description: otherDesc, features: otherFeatures };
-    } else {
-      const text = lang === 'ro' ? 'Text nou' : 'Новый текст'; const otherText = lang === 'ro' ? 'Новый текст' : 'Text nou';
-      newBlock = { type: 'text', text }; otherBlock = { type: 'text', text: otherText };
-    }
-    const newArr = [...contentBlocks, newBlock]; setTranslation(tKey, newArr);
-    const otherBlocks = tLang(otherLang, tKey); const otherArr = Array.isArray(otherBlocks) ? [...otherBlocks, otherBlock] : [otherBlock]; setTranslationForLang(otherLang, tKey, otherArr);
-  };
-
+  const handleAddContentBlock = (blockType) => { const tKey = `serviceData.${activeService}.contentBlocks`; let newBlock, otherBlock; if (blockType === 'image') { newBlock = { type: 'image', src: '' }; otherBlock = { type: 'image', src: '' }; } else if (blockType === 'section') { const title = lang === 'ro' ? 'Titlu nou' : 'Новый заголовок'; const desc = lang === 'ro' ? 'Descriere nouă' : 'Новое описание'; const features = lang === 'ro' ? ['Punct 1', 'Punct 2'] : ['Пункт 1', 'Пункт 2']; const otherTitle = lang === 'ro' ? 'Новый заголовок' : 'Titlu nou'; const otherDesc = lang === 'ro' ? 'Новое описание' : 'Descriere nouă'; const otherFeatures = lang === 'ro' ? ['Пункт 1', 'Пункт 2'] : ['Punct 1', 'Punct 2']; newBlock = { type: 'section', title, description: desc, features }; otherBlock = { type: 'section', title: otherTitle, description: otherDesc, features: otherFeatures }; } else { const text = lang === 'ro' ? 'Text nou' : 'Новый текст'; const otherText = lang === 'ro' ? 'Новый текст' : 'Text nou'; newBlock = { type: 'text', text }; otherBlock = { type: 'text', text: otherText }; } const newArr = [...contentBlocks, newBlock]; setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); const otherArr = Array.isArray(otherBlocks) ? [...otherBlocks, otherBlock] : [otherBlock]; setTranslationForLang(otherLang, tKey, otherArr); };
   const handleDeleteContentBlock = (i) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; newArr.splice(i, 1); setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); if (Array.isArray(otherBlocks)) { const copy = [...otherBlocks]; copy.splice(i, 1); setTranslationForLang(otherLang, tKey, copy); } };
   const handleEditContentBlock = (i, field, val) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; newArr[i] = { ...newArr[i], [field]: val }; setTranslation(tKey, newArr); };
   const handleContentBlockFeatureEdit = (blockIdx, featIdx, val) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; const features = [...(newArr[blockIdx].features || [])]; features[featIdx] = val; newArr[blockIdx] = { ...newArr[blockIdx], features }; setTranslation(tKey, newArr); };
   const handleContentBlockFeatureDelete = (blockIdx, featIdx) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; const features = [...(newArr[blockIdx].features || [])]; features.splice(featIdx, 1); newArr[blockIdx] = { ...newArr[blockIdx], features }; setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); if (Array.isArray(otherBlocks) && otherBlocks[blockIdx]) { const copy = [...otherBlocks]; const oFeats = [...(copy[blockIdx].features || [])]; oFeats.splice(featIdx, 1); copy[blockIdx] = { ...copy[blockIdx], features: oFeats }; setTranslationForLang(otherLang, tKey, copy); } };
   const handleContentBlockFeatureAdd = (blockIdx) => { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; const features = [...(newArr[blockIdx].features || [])]; features.push(lang === 'ro' ? 'Punct nou' : 'Новый пункт'); newArr[blockIdx] = { ...newArr[blockIdx], features }; setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); if (Array.isArray(otherBlocks) && otherBlocks[blockIdx]) { const copy = [...otherBlocks]; const oFeats = [...(copy[blockIdx].features || [])]; oFeats.push(lang === 'ro' ? 'Новый пункт' : 'Punct nou'); copy[blockIdx] = { ...copy[blockIdx], features: oFeats }; setTranslationForLang(otherLang, tKey, copy); } };
-  const handleContentImageUpload = async (i, file) => { const formData = new FormData(); formData.append('image', file); formData.append('name', `content-${activeService}-${i}-${Date.now()}`); try { const res = await fetch('/api/upload', { method: 'POST', body: formData }); const data = await res.json(); if (data.url) { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; newArr[i] = { ...newArr[i], src: data.url }; setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); if (Array.isArray(otherBlocks) && otherBlocks[i]) { const copy = [...otherBlocks]; copy[i] = { ...copy[i], src: data.url }; setTranslationForLang(otherLang, tKey, copy); } } } catch {} };
+  const handleContentImageUpload = async (i, file) => { const formData = new FormData(); formData.append('image', file); formData.append('name', `content-${activeService}-${i}-${Date.now()}`); try { const res = await authFetch('/api/upload', { method: 'POST', body: formData }); const data = await res.json(); if (data.url) { const tKey = `serviceData.${activeService}.contentBlocks`; const newArr = [...contentBlocks]; newArr[i] = { ...newArr[i], src: data.url }; setTranslation(tKey, newArr); const otherBlocks = tLang(otherLang, tKey); if (Array.isArray(otherBlocks) && otherBlocks[i]) { const copy = [...otherBlocks]; copy[i] = { ...copy[i], src: data.url }; setTranslationForLang(otherLang, tKey, copy); } } } catch {} };
 
   const pageTitle = type === 'personal' ? t('services.personalTitle') : t('services.businessTitle');
   const pageSubtitle = type === 'personal' ? t('services.personalSubtitle') : t('services.businessSubtitle');
@@ -290,18 +226,17 @@ function ServicesPage({ type = 'personal' }) {
   const featuresKey = `serviceData.${activeService}.features`;
   const benefitsKey = `serviceData.${activeService}.benefits`;
   const functionsKey = `serviceData.${activeService}.functions`;
-  const currentTab = tabs.find(t => t.id === activeService);
 
   return (
     <div className="services-page">
-      <section className="services-page__hero">
+      <EditableBackground storageKey={`services.hero.${type}`} tag="section" className="services-page__hero">
         <div className="services-page__glow" />
         <div className="container">
           <div className="section-label">{type === 'personal' ? t('nav.personal') : t('nav.business')}</div>
           <EditableText value={pageTitle} tag="h1" className="section-title" onSave={s(type === 'personal' ? 'services.personalTitle' : 'services.businessTitle')} />
           <EditableText value={pageSubtitle} tag="p" className="section-subtitle" onSave={s(type === 'personal' ? 'services.personalSubtitle' : 'services.businessSubtitle')} />
         </div>
-      </section>
+      </EditableBackground>
 
       <div className="services-page__banner">
         <BannerImage type={type} />
@@ -315,10 +250,10 @@ function ServicesPage({ type = 'personal' }) {
                 const Icon = getIcon(tab.icon);
                 return (
                   <div key={tab.id} className={`services-page__tab-wrap ${activeService === tab.id ? 'services-page__tab-wrap--active' : ''}`}>
-                    <button className={`services-page__tab ${activeService === tab.id ? 'services-page__tab--active' : ''}`} onClick={() => handleServiceClick(tab.id)}>
+                    <EditableBackground storageKey={`svc-tab.${type}.${tab.id}`} className={`services-page__tab ${activeService === tab.id ? 'services-page__tab--active' : ''}`} onClick={() => handleServiceClick(tab.id)}>
                       {isAdmin && editMode ? (<EditableIcon iconName={tab.icon} size={20} onSave={(val) => handleTabIconChange(tab.id, val)} />) : (<Icon size={20} />)}
                       <EditableText value={t(`categories.${tab.id}`)} tag="span" onSave={s(`categories.${tab.id}`)} />
-                    </button>
+                    </EditableBackground>
                     {isAdmin && editMode && tabs.length > 1 && (
                       <button className="services-page__tab-delete" onClick={() => handleDeleteTab(tab.id)} title="Удалить услугу"><Trash2 size={12} /></button>
                     )}
@@ -334,17 +269,17 @@ function ServicesPage({ type = 'personal' }) {
               {tabs.map(tab => {
                 const Icon = getIcon(tab.icon);
                 return (
-                  <button key={tab.id} className="services-page__tab services-page__tab--active">
+                  <EditableBackground key={tab.id} storageKey={`svc-tab.${type}.${tab.id}`} className="services-page__tab services-page__tab--active">
                     {isAdmin && editMode ? (<EditableIcon iconName={tab.icon} size={20} onSave={(val) => handleTabIconChange(tab.id, val)} />) : (<Icon size={20} />)}
                     <EditableText value={t(`categories.${tab.id}`)} tag="span" onSave={s(`categories.${tab.id}`)} />
-                  </button>
+                  </EditableBackground>
                 );
               })}
               <button className="services-page__tab services-page__tab--add" onClick={handleAddTab}><Plus size={20} /><span>Добавить</span></button>
             </div>
           )}
 
-          {/* ====== PLANS (not for security) ====== */}
+          {/* ====== PLANS ====== */}
           {activeService !== 'security' && (plans.length > 0 || (isAdmin && editMode)) && (
             <div className="services-page__plans" id="plans">
               <EditableText value={t('services.plans')} tag="h3" className="services-page__plans-title" onSave={s('services.plans')} />
@@ -358,7 +293,7 @@ function ServicesPage({ type = 'personal' }) {
           )}
 
           {/* ====== SERVICE DETAIL ====== */}
-          <div className="services-page__detail animate-in" key={`${type}-${activeService}`}>
+          <EditableBackground storageKey={`svc-detail.${type}.${activeService}`} className="services-page__detail animate-in" key={`${type}-${activeService}`}>
             <div className="services-page__detail-info">
               <EditableText value={t(`serviceData.${activeService}.title`)} tag="h2" className="services-page__detail-title" onSave={s(`serviceData.${activeService}.title`)} />
               <EditableText value={t(`serviceData.${activeService}.description`)} tag="p" className="services-page__detail-desc" onSave={s(`serviceData.${activeService}.description`)} />
@@ -425,7 +360,7 @@ function ServicesPage({ type = 'personal' }) {
                   )}
                   {block.type === 'text' && (<EditableText value={block.text} tag="p" className="services-page__content-text" onSave={(val) => handleEditContentBlock(i, 'text', val)} />)}
                   {block.type === 'section' && (
-                    <div className="services-page__content-section">
+                    <EditableBackground storageKey={`svc-block.${activeService}.${i}`} className="services-page__content-section">
                       <EditableText value={block.title} tag="h3" className="services-page__detail-title" onSave={(val) => handleEditContentBlock(i, 'title', val)} />
                       <EditableText value={block.description} tag="p" className="services-page__detail-desc" onSave={(val) => handleEditContentBlock(i, 'description', val)} />
                       <ul className="services-page__feature-list">
@@ -438,7 +373,7 @@ function ServicesPage({ type = 'personal' }) {
                         ))}
                       </ul>
                       {isAdmin && editMode && (<button className="services-page__feat-add" onClick={() => handleContentBlockFeatureAdd(i)}><Plus size={14} /> Добавить пункт</button>)}
-                    </div>
+                    </EditableBackground>
                   )}
                 </div>
               ))}
@@ -451,14 +386,14 @@ function ServicesPage({ type = 'personal' }) {
                 </div>
               )}
             </div>
-          </div>
+          </EditableBackground>
 
-          {/* ====== SECURITY CTA (after detail) ====== */}
+          {/* ====== SECURITY CTA ====== */}
           {activeService === 'security' && (
-            <div className="services-page__custom-cta" id="plans">
+            <EditableBackground storageKey={`svc-cta.${type}`} className="services-page__custom-cta" id="plans">
               <EditableText value={typeof securityCta === 'string' ? securityCta : ''} tag="p" onSave={s(`serviceData.${activeService}.cta`)} />
               <a href="/contact" className="btn btn-primary">{t('services.requestQuote')}</a>
-            </div>
+            </EditableBackground>
           )}
 
         </div>

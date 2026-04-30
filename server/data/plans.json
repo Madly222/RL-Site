@@ -10,6 +10,10 @@
     "popular": false,
     "features": [
       {
+        "text": "100 Mbps",
+        "included": true
+      },
+      {
         "text": "Router inclus",
         "included": true
       },
@@ -21,7 +25,9 @@
         "text": "Contract 24 luni",
         "included": true
       }
-    ]
+    ],
+    "image": "",
+    "bgImage": "/images/img-1773649994874.jpg"
   },
   {
     "id": "fiz-redwings",
@@ -49,7 +55,9 @@
         "text": "Contract 24 luni",
         "included": true
       }
-    ]
+    ],
+    "image": "",
+    "bgImage": ""
   },
   {
     "id": "fiz-redrocket",
@@ -63,10 +71,6 @@
     "features": [
       {
         "text": "500 Mbps",
-        "included": true
-      },
-      {
-        "text": "Trafic nelimitat",
         "included": true
       },
       {
@@ -113,7 +117,9 @@
         "text": "SLA 99%",
         "included": true
       }
-    ]
+    ],
+    "image": "/images/img-1772707133123.png",
+    "bgImage": "/images/img-1773396287925.png"
   },
   {
     "id": "biz-internet-pro",
@@ -145,7 +151,8 @@
         "text": "SLA 99%",
         "included": true
       }
-    ]
+    ],
+    "image": "/images/img-1772707129235.png"
   },
   {
     "id": "biz-internet-ultra",
@@ -177,7 +184,8 @@
         "text": "SLA 99%",
         "included": true
       }
-    ]
+    ],
+    "image": "/images/img-1772706922395.png"
   },
   {
     "id": "biz-hosting-basic",
@@ -225,7 +233,9 @@
         "text": "Backup saptamanal",
         "included": true
       }
-    ]
+    ],
+    "bgImage": "/images/img-1773649873486.jpg",
+    "image": "/images/img-1773649878498.png"
   },
   {
     "id": "biz-hosting-premium",

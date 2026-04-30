@@ -8,12 +8,39 @@
   position: relative;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeInUp 0.6s ease backwards;
+  overflow: hidden;
 }
 
 .plan-card:hover {
   transform: translateY(-6px);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.7), 0 0 60px rgba(255, 0, 0, 0.4);
+  border-color: rgba(255, 0, 0, 0.5);
+}
+
+/* Без фона — обычный hover градиент */
+.plan-card:not(.plan-card--with-bg):hover {
   background: linear-gradient(180deg, rgba(255, 0, 0, 0.06) 0%, var(--bg-card) 40%);
-  box-shadow: 0 0 60px var(--accent-glow);
+}
+
+/* ---- Фоновая картинка overlay ---- */
+.plan-card__bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-card);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.plan-card--with-bg:hover .plan-card__bg-overlay {
+  opacity: 0.72;
+}
+
+/* Весь контент поверх overlay */
+.plan-card--with-bg > *:not(.plan-card__bg-overlay) {
+  position: relative;
+  z-index: 1;
 }
 
 /* ---- Body: info + image side by side ---- */
@@ -103,12 +130,27 @@
 .plan-card__btn {
   width: 100%;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
-.plan-card__delete {
+/* ---- Admin controls ---- */
+.plan-card__admin-btns {
   position: absolute;
   top: 10px;
   right: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+/* Когда есть боковое фото — сдвигаем влево чтобы не перекрывать */
+.plan-card--with-image .plan-card__admin-btns {
+  right: auto;
+  left: 10px;
+}
+
+.plan-card__delete {
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -120,7 +162,6 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-  z-index: 5;
 }
 
 .plan-card__delete:hover {
@@ -129,10 +170,41 @@
   border-color: #ff4444;
 }
 
-/* When image exists, move delete button left so it doesn't overlap */
-.plan-card--with-image .plan-card__delete {
-  right: auto;
-  left: 10px;
+.plan-card__bg-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  height: 28px;
+}
+
+.plan-card__bg-btn--add {
+  border: 1px dashed var(--border);
+  background: rgba(0,0,0,0.3);
+  color: var(--text-muted);
+  backdrop-filter: blur(4px);
+}
+
+.plan-card__bg-btn--add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.plan-card__bg-btn--delete {
+  border: 1px solid rgba(255,80,80,0.4);
+  background: rgba(255,80,80,0.1);
+  color: #ff6666;
+  backdrop-filter: blur(4px);
+}
+
+.plan-card__bg-btn--delete:hover {
+  background: #ff4444;
+  color: #fff;
+  border-color: #ff4444;
 }
 
 .plan-card__add-feature {
@@ -182,15 +254,14 @@
   opacity: 1;
 }
 
-/* ---- Image area (right side) ---- */
+/* ---- Image area (right side — фото роутера) ---- */
 .plan-card__image-area {
   width: 140px;
   min-height: 140px;
   flex-shrink: 0;
-  border-radius: var(--radius);
   overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--bg-elevated);
+  background: transparent;
+  border: none;
   position: relative;
   display: flex;
   align-items: center;
@@ -247,6 +318,8 @@
   transition: var(--transition);
   backdrop-filter: blur(4px);
   z-index: 3;
+  border: none;
+  cursor: pointer;
 }
 
 .plan-card__img-delete:hover {
@@ -266,7 +339,7 @@
     align-self: stretch;
   }
 
-  .plan-card--with-image .plan-card__delete {
+  .plan-card--with-image .plan-card__admin-btns {
     right: 10px;
     left: auto;
   }

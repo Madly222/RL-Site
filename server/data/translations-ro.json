@@ -172,5 +172,22 @@
   "special.3.desc": "Adu un prieten si vei primi o luna de internet gratuita",
   "serviceData.security.description": "Advanced Network Security este un serviciu profesional de securitate cibernetica oferit de RapidLink.",
   "footer.desc": "Internet fiabil si solutii server pentru afacerea dvs. Activam din 2008.",
-  "hero.subtitle": "Internet de mare viteza si hosting securizat pentru afacerea dvs. Peste 100 de clienti ne incredinteaza infrastructura lor."
+  "hero.subtitle": "Internet de mare viteza si hosting securizat pentru afacerea dvs. Peste 100 de clienti ne incredinteaza infrastructura lor.",
+  "nav.pay_oplata_info": "Achita acum cu oplata.md",
+  "nav.pay_oplata_name": "oplata.md",
+  "nav.pay_oplata_desc": "Plata online",
+  "nav.pay_oplata_steps": [
+    "Apasa butonul oplata.md.",
+    "Introduceti codul OSMP din factura Dvs.",
+    "Introduceti adresa de e-mail.",
+    "Efectuati achitarea."
+  ],
+  "nav.pay_paynet_name": "Paynet",
+  "nav.pay_paynet_desc": "Sistem de plati",
+  "nav.pay_paynet_info": "Poti achita cu propriul portofel electronic doar cu numarul de telefon",
+  "nav.pay_paynet_steps": [
+    "Apasa butonul Paynet.",
+    "Introduceti numarul de telefon.",
+    "Introduceti codul din mesaj."
+  ]
 }

@@ -4,8 +4,10 @@ import { ArrowRight, ChevronRight, ChevronLeft, Users, Building, Plus, Trash2, S
 import { useLang } from '../LangContext.jsx';
 import { EditableText, EditableImage } from '../components/Editable.jsx';
 import { EditableIcon, getIcon } from '../components/IconPicker.jsx';
+import EditableBackground from '../components/EditableBackground.jsx';
 import { useAdmin } from '../AdminContext.jsx';
 import { useScrollReveal } from '../hooks/useScrollReveal.js';
+import { authFetch } from '../api.js';
 import './HomePage.css';
 
 const defaultServiceIcons = { internet: 'wifi', hosting: 'harddrive', vps: 'server', security: 'shield' };
@@ -66,7 +68,7 @@ function HeroSlider() {
   }, []);
 
   const saveToServer = (key, value) => {
-    fetch('/api/translations', {
+    authFetch('/api/translations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang: 'icons', key, value })
@@ -226,7 +228,7 @@ function HomePage() {
   }, []);
 
   const saveIcon = (key, val) => {
-    fetch('/api/translations', {
+    authFetch('/api/translations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang: 'icons', key, value: val })
@@ -245,8 +247,8 @@ function HomePage() {
 
   return (
     <div className="home">
-      {/* ===== HERO — no scroll reveal, plays on load ===== */}
-      <section className="hero">
+      {/* ===== HERO ===== */}
+      <EditableBackground storageKey="home.hero" tag="section" className="hero">
         <div className="hero__bg">
           <div className="hero__grid-lines" />
           <div className="hero__glow" />
@@ -272,9 +274,9 @@ function HomePage() {
             <HeroSlider />
           </div>
         </div>
-      </section>
+      </EditableBackground>
 
-      {/* ===== SERVICES — scroll reveal ===== */}
+      {/* ===== SERVICES ===== */}
       <section className="section services-preview" ref={servicesRef}>
         <div className="container">
           <EditableText value={t('services.label')} tag="div" className="section-label reveal reveal-fade" onSave={s('services.label')} />
@@ -282,7 +284,11 @@ function HomePage() {
           <EditableText value={t('services.subtitle')} tag="p" className="section-subtitle reveal reveal-fade" onSave={s('services.subtitle')} />
           <div className="services-preview__grid">
             {Object.keys(defaultServiceIcons).map((id, i) => (
-              <div key={id} className={`services-preview__card card reveal reveal-up reveal-d${i + 1}`}>
+              <EditableBackground
+                key={id}
+                storageKey={`home.svc-card.${id}`}
+                className={`services-preview__card card reveal reveal-up reveal-d${i + 1}`}
+              >
                 <div className="services-preview__icon">
                   <EditableIcon iconName={svcIcons[id]} size={24} onSave={(val) => saveSvcIcon(id, val)} />
                 </div>
@@ -291,65 +297,73 @@ function HomePage() {
                 <Link to={serviceLinks[id]} className="services-preview__link">
                   {t('services.more')} <ChevronRight size={16} />
                 </Link>
-              </div>
+              </EditableBackground>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ===== PRICING — scroll reveal ===== */}
+      {/* ===== PRICING ===== */}
       <section className="section pricing" ref={pricingRef}>
         <div className="container">
           <EditableText value={t('pricing.label')} tag="div" className="section-label reveal reveal-fade" onSave={s('pricing.label')} />
           <EditableText value={t('pricing.title')} tag="h2" className="section-title reveal reveal-fade" onSave={s('pricing.title')} />
           <EditableText value={t('pricing.subtitle')} tag="p" className="section-subtitle reveal reveal-fade" onSave={s('pricing.subtitle')} />
           <div className="pricing__cards">
-            <Link to="/personal#plans" className="pricing__card reveal reveal-left reveal-d1">
-              <div className="pricing__card-icon"><Users size={32} /></div>
-              <EditableText value={t('pricing.personalBtn')} tag="h3" className="pricing__card-title" onSave={s('pricing.personalBtn')} />
-              <EditableText value={t('pricing.personalDesc')} tag="p" className="pricing__card-desc" onSave={s('pricing.personalDesc')} />
-              <span className="pricing__card-link">{t('services.more')} <ArrowRight size={16} /></span>
-            </Link>
-            <Link to="/business#plans" className="pricing__card reveal reveal-right reveal-d2">
-              <div className="pricing__card-icon"><Building size={32} /></div>
-              <EditableText value={t('pricing.businessBtn')} tag="h3" className="pricing__card-title" onSave={s('pricing.businessBtn')} />
-              <EditableText value={t('pricing.businessDesc')} tag="p" className="pricing__card-desc" onSave={s('pricing.businessDesc')} />
-              <span className="pricing__card-link">{t('services.more')} <ArrowRight size={16} /></span>
-            </Link>
+            <EditableBackground storageKey="home.pricing-personal" className="pricing__card reveal reveal-left reveal-d1">
+              <Link to="/personal#plans" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                <div className="pricing__card-icon"><Users size={32} /></div>
+                <EditableText value={t('pricing.personalBtn')} tag="h3" className="pricing__card-title" onSave={s('pricing.personalBtn')} />
+                <EditableText value={t('pricing.personalDesc')} tag="p" className="pricing__card-desc" onSave={s('pricing.personalDesc')} />
+                <span className="pricing__card-link">{t('services.more')} <ArrowRight size={16} /></span>
+              </Link>
+            </EditableBackground>
+            <EditableBackground storageKey="home.pricing-business" className="pricing__card reveal reveal-right reveal-d2">
+              <Link to="/business#plans" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                <div className="pricing__card-icon"><Building size={32} /></div>
+                <EditableText value={t('pricing.businessBtn')} tag="h3" className="pricing__card-title" onSave={s('pricing.businessBtn')} />
+                <EditableText value={t('pricing.businessDesc')} tag="p" className="pricing__card-desc" onSave={s('pricing.businessDesc')} />
+                <span className="pricing__card-link">{t('services.more')} <ArrowRight size={16} /></span>
+              </Link>
+            </EditableBackground>
           </div>
         </div>
       </section>
 
-      {/* ===== FEATURES — scroll reveal ===== */}
+      {/* ===== FEATURES ===== */}
       <section className="section features" ref={featuresRef}>
         <div className="container">
           <EditableText value={t('features.label')} tag="div" className="section-label reveal reveal-fade" onSave={s('features.label')} />
           <EditableText value={t('features.title')} tag="h2" className="section-title reveal reveal-fade" onSave={s('features.title')} />
           <div className="features__grid">
             {featIcons.map((iconName, i) => (
-              <div key={i} className={`features__item reveal reveal-up reveal-d${i + 1}`}>
+              <EditableBackground
+                key={i}
+                storageKey={`home.feature.${i}`}
+                className={`features__item reveal reveal-up reveal-d${i + 1}`}
+              >
                 <div className="features__icon-wrap">
                   <EditableIcon iconName={iconName} size={28} onSave={(val) => saveFeatIcon(i, val)} />
                 </div>
                 <EditableText value={t(`featureData.${defaultFeatureIcons[i]}.title`)} tag="h3" className="features__title" onSave={s(`featureData.${defaultFeatureIcons[i]}.title`)} />
                 <EditableText value={t(`featureData.${defaultFeatureIcons[i]}.desc`)} tag="p" className="features__desc" onSave={s(`featureData.${defaultFeatureIcons[i]}.desc`)} />
-              </div>
+              </EditableBackground>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ===== CTA — scroll reveal ===== */}
+      {/* ===== CTA ===== */}
       <section className="section cta" ref={ctaRef}>
         <div className="container">
-          <div className="cta__box reveal reveal-scale">
+          <EditableBackground storageKey="home.cta" className="cta__box reveal reveal-scale">
             <div className="cta__glow" />
             <EditableText value={t('cta.title')} tag="h2" className="cta__title" onSave={s('cta.title')} />
             <EditableText value={t('cta.desc')} tag="p" className="cta__desc" onSave={s('cta.desc')} />
             <Link to="/contact" className="btn btn-primary">
               {t('cta.btn')} <ArrowRight size={18} />
             </Link>
-          </div>
+          </EditableBackground>
         </div>
       </section>
     </div>
